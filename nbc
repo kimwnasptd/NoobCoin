@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+import sys
+import subprocess
+import requests
+import time
+
+PIDS_FILE = 'logs/running.pids.log'
+
+
+def run(cmd, logfile):
+    '''
+    Run the cmd and output to the logfile, returns the ret_code, pid
+    '''
+    logfile = open(logfile, 'w')
+    proc = subprocess.Popen(cmd.split(),
+                            universal_newlines=True,
+                            stdout=logfile)
+    # proc.wait()
+
+    return proc.pid
+
+
+def start():
+    nodes = sys.argv[2]
+
+    pids = open(PIDS_FILE, 'w')
+
+    # Start the bootstrapper
+    cmd = 'python rest.py -p 5000 -b -n ' + nodes
+    pid = run(cmd, 'logs/n0.log')
+
+    print('Started Bootstrapper | pid: ' + str(pid))
+    pids.write('bootstrapper: ' + str(pid) + '\n')
+
+    # Make sure the bootstrap has been successfully started
+    time.sleep(1)
+
+    # All the nodes must register themselves at the Bootstrap Node
+    for node in range(int(nodes))[1:]:
+        port = str(5000 + node)
+        pid = run('python rest.py -p ' + port, 'logs/n' + str(node) + '.log')
+        print('Started Miner | pid: ' + str(pid))
+        pids.write('node' + str(node) + ': ' + str(pid) + '\n')
+
+    # Make sure all the nodes have registered
+    time.sleep(2)
+
+    # Then the boostrap node must inform everyone about the networks structure
+    resp = requests.get('http://localhost:5000/broadcast-ring').json()
+    print(resp)
+
+
+def stop():
+    '''
+    Delete all the processes that start from the 'start' step
+    '''
+    pids_f = open(PIDS_FILE, 'r')
+    pids = [pid.split(": ")[-1] for pid in pids_f.read().split('\n')]
+
+    for pid in pids:
+        if pid != '':
+            run("kill -KILL " + pid, 'stop.log')
+
+
+if __name__ == "__main__":
+
+    if len(sys.argv) == 1:
+        print('Available commands: \n' +
+              '   start <n>:   Start the Chain with <n> nodes')
+        exit()
+
+    cmd = sys.argv[1]
+
+    if cmd == 'start':
+        start()
+    elif cmd == 'stop':
+        stop()
