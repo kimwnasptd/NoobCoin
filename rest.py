@@ -2,18 +2,11 @@ import requests
 import logging
 import sys
 import json
+import blockchain
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from werkzeug.contrib.cache import SimpleCache
 from node import Node
-
-
-# import block
-# import node
-# import blockchain
-# import wallet
-# import transaction
-# import wallet
 
 
 logger = None
@@ -91,39 +84,29 @@ get all transactions in the blockchain
 '''
 @app.route('/transactions/get', methods=['GET'])
 def get_transactions():
-    transactions = blockchain.transactions
+    transactions = blockchain.get_transactions()
 
     response = {'transactions': transactions}
     return jsonify(response), 200
 
-
-@app.route('/connect', methods=['POST'])
-def post_connect():
-    ring = request.get_json()
-    node = cache.get('node')
-
-    for nd in ring:
-        if nd['address'] == node.address:
-            node.id = nd['id']
-            cache.set('node', node)
-
-    logger.info('Node successfully connected with ID: ' + str(node.id))
-    logger.info('Network ring: ' + str(ring))
-    return jsonify('OK'), 200
-
-
+'''
+Used by CLI to create and broadcast a new transaction
+based on the receiver's id and the amount
+'''
 @app.route('/create_transaction', methods=['POST'])
 def create_transaction():
     args = request.get_json()
     node = cache.get('node')
     target_id = args['id']
     value = args['value']
-
-    logger.info('Node ' + str(node.id) + 'is attempting a transaction')
-
-    # response = {'transactions': transactions}
-    return jsonify('OK'), 200
-
+    logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
+    logger.info('Target: ' + target_id + 'amount: ' + value)
+    if node.create_transaction(int(target_id), int(value)):
+        logger.info('Transaction successfully broadcasted')
+        return jsonify('OK'), 200
+    else:
+        logger.info('Transaction could not be completed')
+        return jsonify('ERROR'), 404
 
 @app.route('/hi')
 def lets_get_hi():

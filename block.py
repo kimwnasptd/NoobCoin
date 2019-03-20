@@ -2,7 +2,6 @@
 import datetime
 from Crypto.Hash import SHA256
 
-
 class Block:
     def __init__(self, previousHash):
 
