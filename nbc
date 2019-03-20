@@ -72,6 +72,10 @@ def transaction():
     '''
     Create a new transaction from A to B with Value NBCs
     '''
+    if len(sys.argv) != 5:
+        print('Usage: ./nbc t <id-from> <id-to> <coins>')
+        return
+
     src = int(sys.argv[2])
     src_addr = 'http://localhost:' + str(5000 + src)
 
@@ -84,6 +88,31 @@ def transaction():
     requests.post(src_addr, json={'id': dst_id, 'value': value})
     print('Send: {} NBCs from [{}] -> [{}]'.
           format(value, 'localhost:' + str(5000 + src), dst_id))
+
+
+def transaction_file():
+    '''
+    Create a new transaction from A to B with Value NBCs
+    '''
+    if len(sys.argv) != 4:
+        print('Usage: ./nbc tf <id> <file>')
+        return
+
+    src = int(sys.argv[2])
+    src_id = 'localhost:' + str(5000 + src)
+
+    ts_file = open(sys.argv[3], 'r')
+    ts = [t for t in ts_file.read().split('\n')]
+
+    # Send each transaction
+    for t in ts:
+        dst = int(t.split()[0].split('id')[-1])
+        dst_id = 'localhost:' + str(5000 + dst)
+        val = t.split()[-1]
+
+        requests.post('http://' + src_id, json={'id': dst_id, 'value': val})
+        print('Send: {} NBCs from [{}] -> [{}]'.
+              format(val, src_id, 'localhost:' + str(5000 + dst)))
 
 
 if __name__ == "__main__":
@@ -101,3 +130,5 @@ if __name__ == "__main__":
         stop()
     elif cmd == 't':
         transaction()
+    elif cmd == 'tf':
+        transaction_file()
