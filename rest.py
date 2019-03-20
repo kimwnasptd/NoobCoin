@@ -2,6 +2,7 @@ import requests
 import logging
 import sys
 import json
+import blockchain
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from werkzeug.contrib.cache import SimpleCache
@@ -91,25 +92,10 @@ get all transactions in the blockchain
 '''
 @app.route('/transactions/get', methods=['GET'])
 def get_transactions():
-    transactions = blockchain.transactions
+    transactions = blockchain.get_transactions()
 
     response = {'transactions': transactions}
     return jsonify(response), 200
-
-
-@app.route('/connect', methods=['POST'])
-def post_connect():
-    ring = request.get_json()
-    node = cache.get('node')
-
-    for nd in ring:
-        if nd['address'] == node.address:
-            node.id = nd['id']
-            cache.set('node', node)
-
-    logger.info('Node successfully connected with ID: ' + str(node.id))
-    logger.info('Network ring: ' + str(ring))
-    return jsonify('OK'), 200
 
 
 @app.route('/create_transaction', methods=['POST'])
@@ -119,7 +105,8 @@ def create_transaction():
     target_id = args['id']
     value = args['value']
 
-    logger.info('Node ' + str(node.id) + 'is attempting a transaction')
+    logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
+    logger.info('Target: ' + target_id + 'amout: ' + value)
 
     # response = {'transactions': transactions}
     return jsonify('OK'), 200

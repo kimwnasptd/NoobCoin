@@ -3,6 +3,7 @@ from wallet import Wallet
 from random import randint
 from Crypto.Hash import SHA256
 import requests
+from blockchain import Blockchain
 
 CAPACITY = 10
 MINING_DIFFICULTY = 7
@@ -15,7 +16,8 @@ class Node:
         self.address = address
         self.public_key = self.wallet.public_key
         self.id = -1  # Will be automatically set after bootstrapping
-        # self.chain
+        self.cache = []    # a cache for transactions yet to be added
+        self.chain = Blockchain()
         # self.NBCs
         # self.wallet
 
@@ -57,7 +59,11 @@ class Node:
                 return(item['public_key'])
         return(False)
 
-    def mine_block(block, difficulty=MINING_DIFFICULTY):
+    def mine_block(self, block, difficulty=MINING_DIFFICULTY):
+        """
+        Mines the given, filled block until a nonce that sets its first
+        # MINING_DIFFICULTY blocks to 0.
+        """
         sol_length = 300
         while(258 - sol_length < difficulty):   # we check against 258 and not
             #  256 because the sol_length also has the leading '0b' characters
@@ -68,8 +74,62 @@ class Node:
             res_hex = h.hexdigest()
             sol_length = len(bin(int(res_hex, 16)))    # the bin result always
             # starts with 1, so 258 - length gives us the leading zeros
-        # print(sol_length)
+            # print(sol_length)
         return(block)      # return the block with the correct nonce
+
+    def valid_proof(self, block, difficulty=MINING_DIFFICULTY):
+        """
+        Hashes the block, to confirm that the given nonce results in at least
+        # MINING_DIFFICULTY first bits of the hash being set to 0.
+        """
+        block_str = str(block.__dict__.values()).encode()
+        h = SHA256.new(block_str)
+        res_hex = h.hexdigest()
+        sol_length = len(bin(int(res_hex, 16)))
+        if(258 - sol_length < difficulty):
+            return(False)
+        else:
+            return(True)
+
+    def check_sanity(self, id, value, sender):
+        """
+        Returns True if the specific utxo can be used by the specified sender,
+        and has that specific amount. Else, returns false
+        """
+        flag = False
+        for transaction in self.chain.get_transactions():
+            if (transaction.find_utxo(id, value, sender) == "INPUT"):
+                return(False)
+            if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
+                flag = True
+        for transaction in self.cache:
+            if (transaction.find_utxo(id, value, sender) == "INPUT"):
+                return(False)
+            if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
+                flag = True
+        return(flag)
+
+    def check_transaction_balance(self, transaction):
+        input_sum = 0
+        for item in transaction.transaction_inputs:
+            input_sum = input_sum + item.amount
+            if not(check_sanity(item.previousOutputId, item.amount,
+                         transaction.sender)):
+                return False
+        output_sum = (transaction.transaction_outputs[0].amount
+            + transaction.transaction_outputs[0].amount)
+        return(input_sum == output_sum)
+
+    def validate_transaction(self, transaction):
+        """
+        Validates a transaction, checking both its signature, and that the
+        UTXO inputs/outputs are proper.
+        """
+        if(transaction.validate_signature() and
+           check_transaction_balance(transaction)):
+            return(True)
+        else:
+            return(False)
 
     def add_transaction_to_block(self, block, transaction):
         """
@@ -78,13 +138,19 @@ class Node:
         and then it is mined
         """
         # if enough transactions  mine
-        if(validdate_transaction(transaction)):   # if the transaction is valid
-            number_of_transactions = block.add_transaction(transaction)  # add it to the  block
-            if( number_of_transactions >= CAPACITY ):                    # if enough transactions, add the block hash and then mine
+        if(validate_transaction(transaction)):   # if the transaction is valid
+            number_of_transactions = block.add_transaction(transaction)
+            # add it to the  block
+            if(number_of_transactions >= CAPACITY):
+                # if enough transactions, add the block hash and then mine
                 block.hash = block.get_hash()
                 mined_block = mine_block(block)
                 return(mined_block)
         return(block)
+
+
+
+
 
     # def.create_new_block():
 
@@ -97,25 +163,8 @@ class Node:
 
 
 
-    # def validdate_transaction():
-    #     #use of signature and NBCs balance
-
-
-    # def add_transaction_to_block():
-    #     #if enough transactions  mine
-
-
-
-    # def mine_block():
-
-
 
     # def broadcast_block():
-
-
-
-
-    # def valid_proof(.., difficulty=MINING_DIFFICULTY):
 
 
 

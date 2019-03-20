@@ -73,7 +73,7 @@ def transaction():
     Create a new transaction from A to B with Value NBCs
     '''
     src = int(sys.argv[2])
-    src_addr = 'http://localhost:' + str(5000 + src)
+    src_addr = 'http://localhost:' + str(5000 + src) + '/create_transaction'
 
     dst = int(sys.argv[3])
     dst_id = 'localhost:' + str(5000 + dst)
