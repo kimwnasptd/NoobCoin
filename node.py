@@ -14,14 +14,12 @@ MINING_DIFFICULTY = 7
 class Node:
     def __init__(self, address):
         self.NBC = 100
-        self.wallet = Wallet(address)
-        self.address = address
+        self.wallet = Wallet()
+        self.address = address  #URL: localhost:id
         self.public_key = self.wallet.public_key
         self.id = -1  # Will be automatically set after bootstrapping
         self.cache = []    # a cache for transactions yet to be added
         self.chain = Blockchain()
-        # self.NBCs
-        # self.wallet=Wallet()
 
         # here we store information for every node, as its id, its
         # address (ip:port), public key, balance
@@ -172,7 +170,7 @@ class Node:
         used_utxo_indexes = []
         # indexes of those utxos in the list to be removed after
         gathered_amount = 0
-        for idx, t in enumerate(self.wallet.transactions):
+        for idx, t in enumerate(self.wallet.utxos):
             # NOTE: GET MY utxo_list SOMEHOW
             # type(t) == class<TransactionOutput>, just saying
             tospend_utxo_list.append(t)
@@ -183,8 +181,8 @@ class Node:
         if gathered_amount < amount:   # get a job, not enough money
             return False
         #  remove used utxos
-        self.wallet.transactions = [utxo for i, utxo in
-                                    enumerate(self.wallet.transactions) if
+        self.wallet.utxos = [utxo for i, utxo in
+                                    enumerate(self.wallet.utxos) if
                                     i not in used_utxo_indexes]
 
         # create transaction_inputs

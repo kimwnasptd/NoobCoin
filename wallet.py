@@ -15,13 +15,8 @@ from uuid import uuid4
 
 class Wallet:
 
-    public_key = None
-    private_key = None
-    self_address = '0.0.0.0'
-
-    def __init__(self, address, utxos_arg = [] ):
+    def __init__(self, utxos_arg = [] ):
         self.public_key, self.private_key = self.generate_rsa()
-        self.address = address
         self.utxos = utxos_arg
 
     def balance():

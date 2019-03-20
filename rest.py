@@ -9,14 +9,6 @@ from werkzeug.contrib.cache import SimpleCache
 from node import Node
 
 
-# import block
-# import node
-# import blockchain
-# import wallet
-# import transaction
-# import wallet
-
-
 logger = None
 app = Flask(__name__)
 CORS(app)
@@ -97,7 +89,10 @@ def get_transactions():
     response = {'transactions': transactions}
     return jsonify(response), 200
 
-
+'''
+Used by CLI to create and broadcast a new transaction
+based on the receiver's id and the amount
+'''
 @app.route('/create_transaction', methods=['POST'])
 def create_transaction():
     args = request.get_json()
@@ -105,7 +100,7 @@ def create_transaction():
     target_id = args['id']
     value = args['value']
     logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
-    logger.info('Target: ' + target_id + 'amout: ' + value)
+    logger.info('Target: ' + target_id + 'amount: ' + value)
     if node.create_transaction(int(target_id), int(value)):
         logger.info('Transaction successfully broadcasted')
         return jsonify('OK'), 200
