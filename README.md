@@ -4,7 +4,7 @@ A crypto currency made for educational purposes
 The noobs:
 * Kimonas Sotirchos 
 * Ermis Soumalias
-* Markos Seferlis
+* Markos Diomataris
 
 
 ## How to Run

@@ -97,6 +97,34 @@ def get_transactions():
     return jsonify(response), 200
 
 
+@app.route('/connect', methods=['POST'])
+def post_connect():
+    ring = request.get_json()
+    node = cache.get('node')
+
+    for nd in ring:
+        if nd['address'] == node.address:
+            node.id = nd['id']
+            cache.set('node', node)
+
+    logger.info('Node successfully connected with ID: ' + str(node.id))
+    logger.info('Network ring: ' + str(ring))
+    return jsonify('OK'), 200
+
+
+@app.route('/create_transaction', methods=['POST'])
+def create_transaction():
+    args = request.get_json()
+    node = cache.get('node')
+    target_id = args['id']
+    value = args['value']
+
+    logger.info('Node ' + str(node.id) + 'is attempting a transaction')
+
+    # response = {'transactions': transactions}
+    return jsonify('OK'), 200
+
+
 @app.route('/hi')
 def lets_get_hi():
     # for debugging
@@ -131,7 +159,7 @@ if __name__ == '__main__':
     # The state
     node = Node(address)
     cache.set('counter', 1)
-    cache.set('node', Node(address))
+    cache.set('node', node)
     cache.set('nodes_count', nodes_count)
 
     # The Bootstrapping process
