@@ -104,13 +104,14 @@ def create_transaction():
     node = cache.get('node')
     target_id = args['id']
     value = args['value']
-
     logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
     logger.info('Target: ' + target_id + 'amout: ' + value)
-
-    # response = {'transactions': transactions}
-    return jsonify('OK'), 200
-
+    if node.create_transaction(int(target_id), int(value)):
+        logger.info('Transaction successfully broadcasted')
+        return jsonify('OK'), 200
+    else:
+        logger.info('Transaction could not be completed')
+        return jsonify('ERROR'), 404
 
 @app.route('/hi')
 def lets_get_hi():

@@ -37,7 +37,7 @@ def start():
     pids.write('bootstrapper: ' + str(pid) + '\n')
 
     # Make sure the bootstrap has been successfully started
-    time.sleep(1)
+    time.sleep(3)
 
     # All the nodes must register themselves at the Bootstrap Node
     for node in range(int(nodes))[1:]:

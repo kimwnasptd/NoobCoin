@@ -21,7 +21,7 @@ class Node:
         self.cache = []    # a cache for transactions yet to be added
         self.chain = Blockchain()
         # self.NBCs
-        # self.wallet
+        # self.wallet=Wallet()
 
         # here we store information for every node, as its id, its
         # address (ip:port), public key, balance
