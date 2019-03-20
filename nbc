@@ -41,9 +41,7 @@ def start():
         pid = run('python rest.py -p ' + port, 'logs/n' + str(node) + '.log')
         print('Started Miner | pid: ' + str(pid))
         pids.write('node' + str(node) + ': ' + str(pid) + '\n')
-
-    # Make sure all the nodes have registered
-    time.sleep(2)
+        time.sleep(1)
 
     # Then the boostrap node must inform everyone about the networks structure
     resp = requests.get('http://localhost:5000/broadcast-ring').json()

@@ -1,6 +1,11 @@
 # import block
 from wallet import Wallet
+from random import randint
+from Crypto.Hash import SHA256
 import requests
+
+CAPACITY = 10
+MINING_DIFFICULTY = 7
 
 
 class Node:
@@ -43,6 +48,44 @@ class Node:
                 addr = 'http://' + node['address'] + '/connect'
                 requests.post(addr, json=self.ring)
 
+    def get_receiver_key(self, id):
+        """
+        Gets the public key of the wanted recipient of the transaction.
+        """
+        for item in self.ring:
+            if (item['id'] == id):
+                return(item['public_key'])
+        return(False)
+
+    def mine_block(block, difficulty=MINING_DIFFICULTY):
+        sol_length = 300
+        while(258 - sol_length < difficulty):   # we check against 258 and not
+            #  256 because the sol_length also has the leading '0b' characters
+            block.nonce = randint(0, 100000000000000000)
+
+            block_str = str(block.__dict__.values()).encode()
+            h = SHA256.new(block_str)
+            res_hex = h.hexdigest()
+            sol_length = len(bin(int(res_hex, 16)))    # the bin result always
+            # starts with 1, so 258 - length gives us the leading zeros
+        # print(sol_length)
+        return(block)      # return the block with the correct nonce
+
+    def add_transaction_to_block(self, block, transaction):
+        """
+        If the transaction is valid, it is added to the block,
+        and if the block is filled, then its hash is added,
+        and then it is mined
+        """
+        # if enough transactions  mine
+        if(validdate_transaction(transaction)):   # if the transaction is valid
+            number_of_transactions = block.add_transaction(transaction)  # add it to the  block
+            if( number_of_transactions >= CAPACITY ):                    # if enough transactions, add the block hash and then mine
+                block.hash = block.get_hash()
+                mined_block = mine_block(block)
+                return(mined_block)
+        return(block)
+
     # def.create_new_block():
 
 
@@ -51,8 +94,6 @@ class Node:
 
 
     # def broadcast_transaction():
-
-
 
 
 
@@ -87,6 +128,3 @@ class Node:
 
     # def resolve_conflicts(self):
     #     #resolve correct chain
-
-
-
