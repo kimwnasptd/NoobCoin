@@ -21,6 +21,10 @@ def run(cmd, logfile):
 
 
 def start():
+    if len(sys.argv) != 3:
+        print('Usage: ./nbc start <n>')
+        return
+
     nodes = sys.argv[2]
 
     pids = open(PIDS_FILE, 'w')
@@ -39,11 +43,13 @@ def start():
     for node in range(int(nodes))[1:]:
         port = str(5000 + node)
         pid = run('python rest.py -p ' + port, 'logs/n' + str(node) + '.log')
+
+        # Log
         print('Started Miner | pid: ' + str(pid))
         pids.write('node' + str(node) + ': ' + str(pid) + '\n')
 
-    # Make sure all the nodes have registered
-    time.sleep(2)
+        # Wait for the node to register
+        time.sleep(1)
 
     # Then the boostrap node must inform everyone about the networks structure
     resp = requests.get('http://localhost:5000/broadcast-ring').json()
@@ -62,6 +68,24 @@ def stop():
             run("kill -KILL " + pid, 'stop.log')
 
 
+def transaction():
+    '''
+    Create a new transaction from A to B with Value NBCs
+    '''
+    src = int(sys.argv[2])
+    src_addr = 'http://localhost:' + str(5000 + src)
+
+    dst = int(sys.argv[3])
+    dst_id = 'localhost:' + str(5000 + dst)
+
+    value = sys.argv[4]
+
+    # POST the data to the Server's route
+    requests.post(src_addr, json={'id': dst_id, 'value': value})
+    print('Send: {} NBCs from [{}] -> [{}]'.
+          format(value, 'localhost:' + str(5000 + src), dst_id))
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) == 1:
@@ -75,3 +99,5 @@ if __name__ == "__main__":
         start()
     elif cmd == 'stop':
         stop()
+    elif cmd == 't':
+        transaction()

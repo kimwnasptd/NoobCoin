@@ -10,8 +10,12 @@ The noobs:
 ## How to Run
 
 ```bash
-./ngc start <n>  # <n> -> number of miners
-./ngc stop
+# Start 5 Servers
+./nbc start 5 
+./nbc stop
+
+# Send a transaction with 10 NBCs from Node 2 to Node 4
+./nbc t 2 4 10
 ```
 
 You can see the logs for each server at `logs/nX.log`
