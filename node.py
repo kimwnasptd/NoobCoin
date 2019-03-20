@@ -4,6 +4,8 @@ from random import randint
 from Crypto.Hash import SHA256
 import requests
 from blockchain import Blockchain
+from utxo import TransactionInput, TransactionOutput
+from transaction import Transaction
 
 CAPACITY = 10
 MINING_DIFFICULTY = 7
@@ -50,7 +52,7 @@ class Node:
                 addr = 'http://' + node['address'] + '/connect'
                 requests.post(addr, json=self.ring)
 
-    def get_receiver_key(self, id):
+    def get_public_key_by_id(self, id):
         """
         Gets the public key of the wanted recipient of the transaction.
         """
@@ -113,11 +115,11 @@ class Node:
         input_sum = 0
         for item in transaction.transaction_inputs:
             input_sum = input_sum + item.amount
-            if not(check_sanity(item.previousOutputId, item.amount,
-                         transaction.sender)):
+            if not(self.check_sanity(item.previousOutputId, item.amount,
+                                     transaction.sender)):
                 return False
-        output_sum = (transaction.transaction_outputs[0].amount
-            + transaction.transaction_outputs[0].amount)
+        output_sum = (transaction.transaction_outputs[0].amount +
+                      transaction.transaction_outputs[0].amount)
         return(input_sum == output_sum)
 
     def validate_transaction(self, transaction):
@@ -126,7 +128,7 @@ class Node:
         UTXO inputs/outputs are proper.
         """
         if(transaction.validate_signature() and
-           check_transaction_balance(transaction)):
+           self.check_transaction_balance(transaction)):
             return(True)
         else:
             return(False)
@@ -138,25 +140,76 @@ class Node:
         and then it is mined
         """
         # if enough transactions  mine
-        if(validate_transaction(transaction)):   # if the transaction is valid
+        if(self.validate_transaction(transaction)):
+            # if the transaction is valid
             number_of_transactions = block.add_transaction(transaction)
             # add it to the  block
             if(number_of_transactions >= CAPACITY):
                 # if enough transactions, add the block hash and then mine
                 block.hash = block.get_hash()
-                mined_block = mine_block(block)
+                mined_block = self.mine_block(block)
                 return(mined_block)
         return(block)
 
+    def create_transaction(self, receiverId, amount):
+        '''
+        Create a Transaction() Object,
+        receiverId: id of receiver node (as in the Transactions.txt)
+        amount: how much to transfer
+        '''
+        # get my public key
+        sender_address = self.wallet.public_key
 
+        # find public key by receiverId from ring
+        recipient_address = self.get_public_key_by_id(receiverId)
 
+        # get my private key
+        sender_private_key = self.wallet.private_key
+
+        # find utxos that will be used
+        tospend_utxo_list = []
+        # utxos that will be used for the transaction if adequate
+        used_utxo_indexes = []
+        # indexes of those utxos in the list to be removed after
+        gathered_amount = 0
+        for idx, t in enumerate(self.wallet.transactions):
+            # NOTE: GET MY utxo_list SOMEHOW
+            # type(t) == class<TransactionOutput>, just saying
+            tospend_utxo_list.append(t)
+            used_utxo_indexes.append(idx)
+            gathered_amount += t.amount
+            if (gathered_amount >= amount):
+                break
+        if gathered_amount < amount:   # get a job, not enough money
+            return False
+        #  remove used utxos
+        self.wallet.transactions = [utxo for i, utxo in
+                                    enumerate(self.wallet.transactions) if
+                                    i not in used_utxo_indexes]
+
+        # create transaction_inputs
+        transaction_inputs = [TransactionInput(utxo.id, utxo.amount) for
+                              utxo in tospend_utxo_list]
+        # create transaction_outputs: sent amount and change
+        sent_amount = amount
+        change = gathered_amount - amount
+        transaction_outputs = [TransactionOutput(sent_amount, -1,
+                                                 recipient_address),
+                               TransactionOutput(change, -1, sender_address)]
+        # create Transaction Object
+        T = Transaction(sender_address=sender_address,
+                        sender_private_key=sender_private_key,
+                        recipient_address=recipient_address, amount=amount,
+                        transaction_inputs=transaction_inputs,
+                        transaction_outputs=transaction_outputs)
+
+        # remember to broadcast it
+        self.broadcast_transaction(T)
+        return True
 
 
     # def.create_new_block():
 
-
-    # def create_transaction(sender, receiver, signature):
-    #     #remember to broadcast it
 
 
     # def broadcast_transaction():

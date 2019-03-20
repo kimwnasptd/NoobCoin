@@ -13,14 +13,16 @@ from flask import Flask, jsonify, request, render_template
 
 class Transaction:
 
-    def __init__(self, sender_address, sender_private_key,
-                 recipient_address=305, value=10):
-        self.sender_address = sender_address      # PUBLIC KEY
-        self.receiver_address = recipient_address   # PUBLIC KEY
-        self.amount = value
-        self.transaction_inputs = []
-        self.transaction_outputs = []
+    def __init__(self, sender_address, sender_private_key, recipient_address,
+                 amount, transaction_inputs=[], transaction_outputs=[]):
+        self.sender_address = sender_address
+        self.receiver_address = recipient_address
+        self.amount = amount
+        self.transaction_inputs = transaction_inputs
+        self.transaction_outputs = transaction_outputs
         self.transaction_id = self.get_id()
+        for utxo in self.transaction_outputs:
+            utxo.transaction_id = self.transaction_id
         self.Signature = self.get_signature(sender_private_key)
 
     #     # self.sender_address: To public key του wallet από το
@@ -43,6 +45,7 @@ class Transaction:
 
     def get_id(self):
         dict = self.to_dict()
+        dict.pop('transaction_outputs')
 
         print("Transaction dictionary inside GET_ID is:")
         print(dict)
@@ -95,8 +98,8 @@ class Transaction:
         as input or output
         """
         for item in self.transaction_outputs:
-            if (item.id == id and item.amount == value
-            and item.address == sender):
+            if (item.id == id and item.amount == value and
+                    item.address == sender):
                 return("OUTPUT")
         for item in self.transaction_inputs:
             if (item.id == id):

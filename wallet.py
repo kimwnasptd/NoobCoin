@@ -19,10 +19,10 @@ class Wallet:
     private_key = None
     self_address = '0.0.0.0'
 
-    def __init__(self, address):
+    def __init__(self, address, utxos_arg = [] ):
         self.public_key, self.private_key = self.generate_rsa()
         self.address = address
-        # self.transactions
+        self.utxos = utxos_arg
 
     def balance():
         pass
