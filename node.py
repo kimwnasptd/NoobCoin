@@ -18,7 +18,7 @@ class Node:
         self.address = address  #URL: localhost:id
         self.public_key = self.wallet.public_key
         self.id = -1  # Will be automatically set after bootstrapping
-        self.cache = []    # a cache for transactions yet to be added
+        self.tx_buffer = []    # a tx_buffer for transactions yet to be added
         self.chain = Blockchain()
 
         # here we store information for every node, as its id, its
@@ -102,7 +102,7 @@ class Node:
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
                 flag = True
-        for transaction in self.cache:
+        for transaction in self.tx_buffer:
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
