@@ -2,9 +2,12 @@ from block import Block
 
 
 class Blockchain:
-    def __init__(self, initial_blocklist=[Block(b"0")]):
+    def __init__(self, blocks=[Block(b"0")]):
 
-        self.blocks = initial_blocklist
+        self.blocks = blocks
+
+    def serialize(self):
+        return {'blocks': [i.serialize() for i in self.blocks]}
 
     def get_transactions(self):
         transactions = []

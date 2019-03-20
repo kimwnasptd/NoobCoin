@@ -2,14 +2,22 @@
 import datetime
 from Crypto.Hash import SHA256
 
+
 class Block:
     def __init__(self, previousHash):
 
         self.previousHash = previousHash
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.listOfTransactions = []       # will be filled by add_transaction
         self.nonce = 0   # will be filled by mine_block when the  block is full
-        self.hash = 0   # will be filled once the list of transactions is full
+        self.hash = b"0"   # will be filled once the list of transactions is full
+
+    def serialize(self):
+        return{'previousHash': self.previousHash.decode(),
+               'timestamp': self.timestamp,
+               'listOfTransactions': [i.serialize() for i in self.listOfTransactions],
+               'nonce': self.nonce,
+               'hash': self.hash.decode()}
 
     def get_hash(self):
         """
