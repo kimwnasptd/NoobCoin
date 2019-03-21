@@ -148,6 +148,36 @@ def send_transaction():
     return jsonify('OK'), 200
 
 
+'''
+Get a Node's blockchain
+'''
+@app.route('/blockchain')
+def get_blockchain():
+    node = cache.get('node')
+    return jsonify({'blockchain': node.chain.serialize()}), 200
+
+
+'''
+Other Nodes POST this route to inform the Node that they found a new Block
+'''
+@app.route('/block', methods=['POST'])
+def post_block():
+    logger.info('Got a new block from ' + request.remote_addr)
+    node = cache.get('node')
+    data = request.get_json()
+    blk = Block(**data['block'])
+
+    # Check if the block is valid, add it to the blockchain
+    if node.validate_block(blk):
+        node.chain.blocks.append(blk)
+        # TODO: Stop the minning
+        return jsonify('Block added'), 200
+
+    # Else, we need to see if we must update our blockchain
+    node.resolve_conflict()
+    cache.set('node', node)
+
+
 @app.route('/hi')
 def lets_get_hi():
     # for debugging

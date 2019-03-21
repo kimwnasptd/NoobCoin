@@ -264,8 +264,11 @@ class Node:
         block in the chain
         """
         if(not index):
-            len(self.chain.blocks)
-        curr_hash = self.blockchain.blocks[index - 1]
+            # Only compare with the head of the blockchain
+            curr_hash = self.chain.blocks[-1].hash
+            return (block.validate_hash() and curr_hash == block.previousHash)
+
+        curr_hash = self.chain.blocks[index - 1].hash
         return(block.validate_hash() and (curr_hash == block.previousHash))
 
     def validate_chain(self):
@@ -280,25 +283,30 @@ class Node:
             addr = 'http://' + node['address'] + '/send-transaction'
             requests.post(addr, json={'transaction': t.serialize()})
 
+    def resolve_conflicts(self):
+        # Ask every other node in the ring and only keep the largest chain
+        curr = self.chain
+        found = False
 
+        for node in self.ring:
+            if node['address'] != self.address:
+                chain = requests \
+                    .get('http://' + node['address'] + '/blockchain').json()
 
+                # Check if new Blockchain is larger
+                if len(curr.blocks) < len(chain['blockchain'].blocks):
+                    found = True
+                    curr = Blockchain(json=True, **chain)
 
-
-
-        # #concencus functions
-
-    # def valid_chain(self, chain):
-    #     #check for the longer chain accroose all nodes
-
-
-        # def resolve_conflicts(self):
-        #     #resolve correct chain
-
+        # If we found a new blockchain, again we must stop minning and change
+        # our active blockchain
+        if found:
+            # TODO: stop the minning
+            self.chain = curr
+            # TODO: update the user's wallet
 
 
     # def.create_new_block():
-
-
 
 
     # def broadcast_block():

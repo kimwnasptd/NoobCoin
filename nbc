@@ -34,6 +34,7 @@ def start():
     cmd = 'python rest.py -p 5000 -b -n ' + nodes
     pid = run(cmd, 'logs/n0.log')
 
+    print('---------------------- Setting up the Nodes ----------------------')
     print('Started Bootstrapper | pid: ' + str(pid))
     pids.write('bootstrapper: ' + str(pid) + '\n')
 
@@ -46,7 +47,7 @@ def start():
         pid = run('python rest.py -p ' + port, 'logs/n' + str(node) + '.log')
 
         # Log
-        print('Started Miner | pid: ' + str(pid))
+        print('\nStarted Miner | pid: ' + str(pid))
         pids.write('node' + str(node) + ': ' + str(pid) + '\n')
 
         # Wait for the node to register
@@ -56,14 +57,20 @@ def start():
     resp = requests.get(BTS + '/broadcast-ring').json()
     print(resp)
 
+    print()
+    print('------------------------------------------------------------------')
+    print('------------------ Sending Initial Transactions ------------------')
     time.sleep(1)
-    print('Sending initial Transactions')
     # The bootstrapper creates the first n initial transactions
     for n in range(int(nodes))[1:]:
+        print('\nBroadcasting initial Transaction for Node ' + str(n))
         requests.post(BTS + '/create-transaction', json={
             'id': n,
             'value': 100,
         })
+
+    print()
+    print('-------------- Bootstrapping Completed Succesfully! --------------')
 
 
 def stop():
@@ -90,12 +97,12 @@ def transaction():
     src_addr = 'http://localhost:' + str(5000 + src) + '/create-transaction'
 
     dst = int(sys.argv[3])
-    dst_id = int(dst)
+    dst_id = 'localhost:' + str(5000 + dst)
 
     value = int(sys.argv[4])
 
     # POST the data to the Server's route
-    requests.post(src_addr, json={'id': dst_id, 'value': value})
+    requests.post(src_addr, json={'id': dst, 'value': value})
     print('Send: {} NBCs from [{}] -> [{}]'.
           format(value, 'localhost:' + str(5000 + src), dst_id))
 
@@ -118,11 +125,11 @@ def transaction_file():
     for t in ts:
         dst = int(t.split()[0].split('id')[-1])
         dst_id = 'localhost:' + str(5000 + dst)
-        val = t.split()[-1]
+        val = int(t.split()[-1])
 
-        requests.post('http://' + src_id, json={'id': dst_id, 'value': val})
+        requests.post('http://' + src_id, json={'id': dst, 'value': val})
         print('Send: {} NBCs from [{}] -> [{}]'.
-              format(val, src_id, 'localhost:' + str(5000 + dst)))
+              format(val, src_id, dst_id))
 
 
 if __name__ == "__main__":
