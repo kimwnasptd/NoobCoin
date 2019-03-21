@@ -2,25 +2,43 @@
 import datetime
 from Crypto.Hash import SHA256
 from utils import create_logger
+from transaction import Transaction
 
 logger = create_logger(__name__)
 
 
 class Block:
-    def __init__(self, previousHash):
+    def __init__(self, *args, **kwargs):
+        '''
+        previousHash: bytes
+        timestamp: string
+        listOfTransactions: [Transaction]
+        nonce: int
+        hash: bytes
+        '''
 
-        self.previousHash = previousHash
-        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.listOfTransactions = []       # will be filled by add_transaction
-        self.nonce = 0   # will be filled by mine_block when the  block is full
-        self.hash = b"0"   # will be filled once the list of transactions is full
+        self.previousHash = bytes(kwargs['previousHash'])
+        if kwargs.get('timestamp', None) is not None:
+            # Got a JSON Object
+            self.timestamp = kwargs['timestamp']
+            ts = kwargs['listOfTransactions']
+            self.listOfTransactions = [Transaction(**t) for t in ts]
+            self.nonce = kwargs['nonce']
+            self.hash = bytes(kwargs['hash'])
+        else:
+            self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.listOfTransactions = []       # will be filled by add_transaction
+            self.nonce = 0   # will be filled by mine_block when the  block is full
+            self.hash = b"0"  # will be filled once the list of transactions is full
 
     def serialize(self):
-        return{'previousHash': self.previousHash.decode(),
-               'timestamp': self.timestamp,
-               'listOfTransactions': [i.serialize() for i in self.listOfTransactions],
-               'nonce': self.nonce,
-               'hash': self.hash.decode()}
+        return {
+            'previousHash': [int(b) for b in self.previousHash],
+            'timestamp': self.timestamp,
+            'listOfTransactions': [i.serialize() for i in self.listOfTransactions],
+            'nonce': self.nonce,
+            'hash': [int(b) for b in self.hash],
+        }
 
     def get_hash(self):
         """

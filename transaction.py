@@ -7,6 +7,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from utils import create_logger
+from utxo import TransactionInput, TransactionOutput
 
 import requests
 from flask import Flask, jsonify, request, render_template
@@ -16,27 +17,52 @@ logger = create_logger(__name__)
 
 class Transaction:
 
-    def __init__(self, sender_address, sender_private_key, recipient_address,
-                 amount, transaction_inputs=[], transaction_outputs=[]):
-        self.sender_address = sender_address
-        self.receiver_address = recipient_address
-        self.amount = amount
-        self.transaction_inputs = transaction_inputs
-        self.transaction_outputs = transaction_outputs
-        self.transaction_id = self.get_id()
-        for utxo in self.transaction_outputs:
-            utxo.transaction_id = self.transaction_id
-        self.Signature = self.get_signature(sender_private_key)
+    def __init__(self, *args, **kwargs):
+        '''
+        sender_address: bytes
+        receiver_address: bytes
+        amount: int
+        transaction_inputs: [TransactionInput]
+        transaction_outputs: [TransactionOutput]
+        transaction_id: string
+        Signature: bytes
+        '''
+
+        # These are common between json constructor and object constructor
+        self.amount = kwargs['amount']
+
+        if kwargs.get('Signature', None) is not None:
+            # Got a JSON object
+            self.sender_address = bytes(kwargs['sender_address'])
+            self.receiver_address = bytes(kwargs['receiver_address'])
+            in_utxos = kwargs['transaction_inputs']
+            out_utxos = kwargs['transaction_outputs']
+            self.transaction_inputs = [TransactionInput(**t) for t in in_utxos]
+            self.transaction_outputs = [TransactionOutput(**t) for t in out_utxos]
+
+            self.transaction_id = kwargs['transaction_id']
+            self.Signature = bytes(kwargs['Signature'])
+        else:
+            self.sender_address = kwargs['sender_address']
+            self.receiver_address = kwargs['receiver_address']
+            self.transaction_inputs = kwargs['transaction_inputs']
+            self.transaction_outputs = kwargs['transaction_outputs']
+            self.transaction_id = self.get_id()
+            for utxo in self.transaction_outputs:
+                utxo.transaction_id = self.transaction_id
+            sender_private_key = kwargs['sender_private_key']
+            self.Signature = self.get_signature(sender_private_key)
 
     def serialize(self):
-        return {'sender_address': self.sender_address.decode(),
-                'receiver_address': self.receiver_address.decode(),
-                'amount': self.amount,
-                'transaction_inputs': [i.serialize() for i in self.transaction_inputs],
-                'transaction_outputs': [i.serialize() for i in self.transaction_outputs],
-                'transaction_id': self.transaction_id,
-                'Signature': [int(b) for b in self.Signature]  # Make bytes -> [int]
-                }
+        return {
+            'sender_address': [int(b) for b in self.sender_address],
+            'receiver_address': [int(b) for b in self.receiver_address],
+            'amount': self.amount,
+            'transaction_inputs': [i.serialize() for i in self.transaction_inputs],
+            'transaction_outputs': [i.serialize() for i in self.transaction_outputs],
+            'transaction_id': self.transaction_id,
+            'Signature': [int(b) for b in self.Signature],
+        }
 
     def to_dict(self):
         """

@@ -8,6 +8,8 @@ from flask_cors import CORS
 from werkzeug.contrib.cache import SimpleCache
 from utils import create_logger
 from node import Node
+from transaction import Transaction
+from block import Block
 
 
 logger = create_logger('rest')
@@ -81,6 +83,8 @@ def post_connect():
     logger.info('Node successfully connected with ID: ' + str(node.id))
     logger.info('Network ring: ' + str(node.ring))
     logger.info('Network genesis_chain: ' + str(node.chain))
+    # Transaction(**genesis_chain['blocks'][0]['listOfTransactions'][0])
+    Block(**genesis_chain['blocks'][0])
     return jsonify('OK'), 200
 
 

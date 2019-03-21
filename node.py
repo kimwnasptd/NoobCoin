@@ -46,15 +46,22 @@ class Node:
 
     def create_genesis_chain(self):
         # Construct Bootstrap node first utxo : n*100 coins
-        B0 = Block(b'0')
+        B0 = Block(previousHash=b'0')
         n = len(self.ring)
-        T0 = Transaction(sender_address=self.public_key,
-                        sender_private_key=self.wallet.private_key,
-                        recipient_address=self.public_key, amount=n*100,
-                        transaction_inputs=[],
-                        transaction_outputs=[
-                            TransactionOutput(n*100, -1, self.public_key),
-                            TransactionOutput(0, -1, self.public_key)])
+        T0 = Transaction(
+            sender_address=self.public_key,
+            sender_private_key=self.wallet.private_key,
+            receiver_address=self.public_key, amount=n*100,
+            transaction_inputs=[],
+            transaction_outputs=[
+                TransactionOutput(amount=n*100,
+                                  transaction_id=-1,
+                                  address=self.public_key),
+                TransactionOutput(amount=0,
+                                  transaction_id=-1,
+                                  address=self.public_key)
+            ]
+        )
         B0.add_transaction(T0)
         self.chain = Blockchain(blocks=[B0])
 
@@ -67,8 +74,10 @@ class Node:
         for node in self.ring:
             if node['address'] != self.address:
                 addr = 'http://' + node['address'] + '/connect'
-                requests.post(addr, json={'ring': self.ring,
-                                          'genesis_chain': self.chain.serialize()})
+                requests.post(addr, json={
+                    'ring': self.ring,
+                    'genesis_chain': self.chain.serialize()
+                })
 
     def get_public_key_by_id(self, id):
         """
@@ -205,18 +214,25 @@ class Node:
                              if i not in used_utxo_indexes]
 
         # create transaction_inputs
-        transaction_inputs = [TransactionInput(utxo.id, utxo.amount) for
-                              utxo in tospend_utxo_list]
+        transaction_inputs = [
+            TransactionInput(previousOutputId=utxo.id, amount=utxo.amount)
+            for utxo in tospend_utxo_list
+        ]
         # create transaction_outputs: sent amount and change
         sent_amount = amount
         change = gathered_amount - amount
-        transaction_outputs = [TransactionOutput(sent_amount, -1,
-                                                 recipient_address),
-                               TransactionOutput(change, -1, sender_address)]
+        transaction_outputs = [
+            TransactionOutput(amount=sent_amount, 
+                              transaction_id=-1,
+                              address=recipient_address),
+            TransactionOutput(amount=change,
+                              transaction_id=-1,
+                              address=sender_address)
+        ]
         # create Transaction Object
         T = Transaction(sender_address=sender_address,
                         sender_private_key=sender_private_key,
-                        recipient_address=recipient_address, amount=amount,
+                        receiver_address=recipient_address, amount=amount,
                         transaction_inputs=transaction_inputs,
                         transaction_outputs=transaction_outputs)
 

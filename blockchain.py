@@ -2,7 +2,7 @@ from block import Block
 
 
 class Blockchain:
-    def __init__(self, blocks=[Block(b"0")]):
+    def __init__(self, blocks=[Block(previousHash=b"0")]):
 
         self.blocks = blocks
 
