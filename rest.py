@@ -122,6 +122,50 @@ def create_transaction():
         logger.info('Transaction could not be completed')
         return jsonify('ERROR'), 404
 
+
+'''
+Used by nodes to notify each other of a transaction.
+'''
+@app.route('/send_transaction', methods=['POST'])
+def receive_transaction():
+    logger.info('Node notified of a transaction')
+    data = request.get_json()
+    logger.info("Data json is: " + str(data))
+    node = cache.get('node')
+    transaction = Transaction(**data['transaction'])
+    # if node.create_transaction(int(target_id), int(value)):
+    #     logger.info('Transaction successfully broadcasted')
+    #     return jsonify('OK'), 200
+    # else:
+    #     logger.info('Transaction could not be completed')
+    #     return jsonify('ERROR'), 404
+    return jsonify('OK'), 200
+
+
+# @app.route('/connect', methods=['POST'])
+# def post_connect():
+#     data = request.get_json()
+#     ring = data['ring']
+#     genesis_chain = data['genesis_chain']
+#     node = cache.get('node')
+#
+#     for nd in ring:
+#         if nd['address'] == node.address:
+#             node.id = nd['id']
+#             node.ring = ring
+#             node.chain = genesis_chain
+#             cache.set('node', node)
+#
+#     logger.info('Node successfully connected with ID: ' + str(node.id))
+#     logger.info('Network ring: ' + str(node.ring))
+#     logger.info('Network genesis_chain: ' + str(node.chain))
+#     # Transaction(**genesis_chain['blocks'][0]['listOfTransactions'][0])
+#     # Block(**genesis_chain['blocks'][0])
+#     Blockchain(json=True, **genesis_chain)
+#
+#     return jsonify('OK'), 200
+
+
 @app.route('/hi')
 def lets_get_hi():
     # for debugging
