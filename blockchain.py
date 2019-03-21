@@ -21,3 +21,6 @@ class Blockchain:
             return(True)
         else:
             return(False)
+
+    def get_last_block(self):
+        return(self.blocks[-1])

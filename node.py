@@ -49,10 +49,10 @@ class Node:
         B0 = Block(b'0')
         n = len(self.ring)
         T0 = Transaction(sender_address=self.public_key,
-                        sender_private_key=self.wallet.private_key,
-                        recipient_address=self.public_key, amount=n*100,
-                        transaction_inputs=[],
-                        transaction_outputs=[
+                         sender_private_key=self.wallet.private_key,
+                         recipient_address=self.public_key, amount=n*100,
+                         transaction_inputs=[],
+                         transaction_outputs=[
                             TransactionOutput(n*100, -1, self.public_key),
                             TransactionOutput(0, -1, self.public_key)])
         B0.add_transaction(T0)
@@ -67,8 +67,9 @@ class Node:
         for node in self.ring:
             if node['address'] != self.address:
                 addr = 'http://' + node['address'] + '/connect'
-                requests.post(addr, json={'ring': self.ring,
-                                          'genesis_chain': self.chain.serialize()})
+                requests.post(addr,
+                              json={'ring': self.ring,
+                                    'genesis_chain': self.chain.serialize()})
 
     def get_public_key_by_id(self, id):
         """
@@ -81,7 +82,7 @@ class Node:
 
     def mine_block(self, block, difficulty=MINING_DIFFICULTY):
         """
-        Mines the given, filled block until a nonce that sets its first
+            Mines the given, filled block until a nonce that sets its first
         # MINING_DIFFICULTY blocks to 0.
         """
         sol_length = 300
@@ -224,11 +225,38 @@ class Node:
         self.broadcast_transaction(T)
         return(True)
 
-    def valid_block(self, block):
-        return(True)
+    def validate_block(self, block, index=None):
+        """
+        Is called by the nodes when a new block is received. Ensures that:
+        1) The current hash field is correct
+        2) The previous hash field agrees with the hash of the previous
+        block in the chain
+        """
+        if(not index):
+            len(self.chain.blocks)
+        curr_hash = self.blockchain.blocks[index - 1]
+        return(block.validate_hash() and (curr_hash == block.previousHash))
 
-    def valid_chain():
-        return(True)
+    def validate_chain(self):
+        flag = True
+        block_list = self.chain.blocks
+        for i in range(1, len(block_list)):
+            flag = flag and self.validate_block(block_list[i])
+        return(flag)
+
+
+
+
+
+        # #concencus functions
+
+    # def valid_chain(self, chain):
+    #     #check for the longer chain accroose all nodes
+
+
+        # def resolve_conflicts(self):
+        #     #resolve correct chain
+
 
 
     # def.create_new_block():
@@ -241,15 +269,3 @@ class Node:
 
 
     # def broadcast_block():
-
-
-
-
-    # #concencus functions
-
-    # def valid_chain(self, chain):
-    #     #check for the longer chain accroose all nodes
-
-
-    # def resolve_conflicts(self):
-    #     #resolve correct chain

@@ -13,12 +13,14 @@ class Block:
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.listOfTransactions = []       # will be filled by add_transaction
         self.nonce = 0   # will be filled by mine_block when the  block is full
-        self.hash = b"0"   # will be filled once the list of transactions is full
+        self.hash = b"0"
+        # will be filled once the list of transactions is full
 
     def serialize(self):
         return{'previousHash': self.previousHash.decode(),
                'timestamp': self.timestamp,
-               'listOfTransactions': [i.serialize() for i in self.listOfTransactions],
+               'listOfTransactions': [i.serialize() for i in
+                                      self.listOfTransactions],
                'nonce': self.nonce,
                'hash': self.hash.decode()}
 
@@ -44,3 +46,17 @@ class Block:
         """
         self.listOfTransactions.append(transaction)
         return(len(self.listOfTransactions))
+
+    def validate_hash(self):
+        """
+        Follows the same procedure as the get_hash function and ensures that
+        the given hash is correct.
+        """
+        hash = self.hash
+        dict = self.__dict__.copy()
+        dict.pop("hash")
+        dict.pop("nonce")
+        class_str = str(list(dict.values())).encode()
+        h = SHA256.new(class_str)
+        res_hex = h.hexdigest()
+        return(res_hex == hash)
