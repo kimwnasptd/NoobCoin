@@ -30,8 +30,9 @@ class TransactionOutput:
         self.transaction_id = kwargs['transaction_id']
         # id from transaction that this utxo came from
 
-        if kwargs.get(id, None) is not None:
+        if kwargs.get('id', None) is not None:
             # Got a JSON object
+            logger.info("UTXO creation through json object")
             self.id = kwargs['id']  # maybe int() is needed
             self.address = (kwargs['address']).encode()
         else:
@@ -44,5 +45,5 @@ class TransactionOutput:
             'amount': self.amount,
             'id': self.id,
             'transaction_id': self.transaction_id,
-            'address': [int(b) for b in self.address]
+            'address': self.address.decode()
         }

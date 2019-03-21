@@ -120,7 +120,10 @@ def create_transaction():
     logger.info("Target id value/type: " + str(target_id) +' ' + str(type(target_id)))
     logger.info("Value value/type: " + str(value) + ' ' + str(type(value)))
     t = node.create_transaction(target_id, value)
+    cache.set('node',node)
     if t is not None:
+        logger.info('INSIDE CREATE TRANSACTION Signature verification = ' + str(t.verify_signature()))
+        logger.info('INSIDE CREATE TRANSACTION Transaction validation = ' + str(node.validate_transaction(t)))
         node.broadcast_transaction(t)  # hit /send-transaction endpoint n times
         logger.info('Transaction successfully broadcasted')
         return jsonify('OK'), 200
@@ -134,18 +137,33 @@ Used by nodes to notify each other of a transaction.
 '''
 @app.route('/send-transaction', methods=['POST'])
 def send_transaction():
-    logger.info('Node notified of a transaction')
+    logger.info('INSIDE /send-transaction')
     data = request.get_json()
     logger.info("Data json is: " + str(data))
     node = cache.get('node')
     transaction = Transaction(**data['transaction'])
-    # if node.create_transaction(int(target_id), int(value)):
-    #     logger.info('Transaction successfully broadcasted')
-    #     return jsonify('OK'), 200
-    # else:
-    #     logger.info('Transaction could not be completed')
-    #     return jsonify('ERROR'), 404
-    return jsonify('OK'), 200
+    # logger.info('Signature  = ' + str(transaction.Signature))
+    logger.info('Inside /send-transaction Signature verification = ' + str(transaction.verify_signature()))
+    # logger.info('Transaction validation = ' + str(node.validate_transaction(transaction)))
+    if node.validate_transaction(transaction):
+        logger.info('Transaction validated')
+        # update buffer
+        node.tx_buffer.append(transaction)
+        logger.info('Buffer updated, new length: ' + str(len(node.tx_buffer)))
+        # update wallet if needed
+        if transaction.receiver_address == node.public_key:  # get sent money
+            node.wallet.utxos.append(transaction.transaction_outputs[0])
+            logger.info('Updated my wallet with sent amount + ' + str(node.wallet.utxos[-1].amount))
+        if transaction.sender_address == node.public_key:  # get change money
+            node.wallet.utxos.append(transaction.transaction_outputs[1])
+            logger.info('Updated my wallet with change money+ ' + str(node.wallet.utxos[-1].amount))
+
+        cache.set('node', node)
+        return jsonify('OK'), 200
+    else:
+        logger.info('Transaction couldn\'t be validated')
+        cache.set('node', node)
+        return jsonify('INVTR'), 500
 
 
 @app.route('/hi')
