@@ -121,7 +121,7 @@ def create_transaction():
     logger.info("Value value/type: " + str(value) + ' ' + str(type(value)))
     t = node.create_transaction(target_id, value)
     if t is not None:
-        node.broadcast_transaction(t)
+        node.broadcast_transaction(t)  # hit /send-transaction endpoint n times
         logger.info('Transaction successfully broadcasted')
         return jsonify('OK'), 200
     else:

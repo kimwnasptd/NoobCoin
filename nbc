@@ -90,9 +90,9 @@ def transaction():
     src_addr = 'http://localhost:' + str(5000 + src) + '/create-transaction'
 
     dst = int(sys.argv[3])
-    dst_id = 'localhost:' + str(5000 + dst)
+    dst_id = int(dst)
 
-    value = sys.argv[4]
+    value = int(sys.argv[4])
 
     # POST the data to the Server's route
     requests.post(src_addr, json={'id': dst_id, 'value': value})
