@@ -65,16 +65,22 @@ and also update his id value
 '''
 @app.route('/connect', methods=['POST'])
 def post_connect():
-    ring = request.get_json()
+    data = request.get_json()
+    ring = data['ring']
+    genesis_chain = data['genesis_chain']
     node = cache.get('node')
 
     for nd in ring:
         if nd['address'] == node.address:
             node.id = nd['id']
+            node.ring = ring
+            node.chain = genesis_chain
             cache.set('node', node)
 
     logger.info('Node successfully connected with ID: ' + str(node.id))
-    logger.info('Network ring: ' + str(ring))
+    logger.info('Network ring: ' + str(node.ring))
+    logger.info('Network ring: ' + str(type(ring[0])))
+    logger.info('Network genesis_chain: ' + str(node.chain.get_transactions()))
     return jsonify('OK'), 200
 
 
@@ -88,6 +94,7 @@ def get_transactions():
 
     response = {'transactions': transactions}
     return jsonify(response), 200
+
 
 '''
 Used by CLI to create and broadcast a new transaction

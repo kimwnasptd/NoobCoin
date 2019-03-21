@@ -15,11 +15,11 @@ from uuid import uuid4
 
 class Wallet:
 
-    def __init__(self, utxos_arg = [] ):
+    def __init__(self, utxos_arg=[]):
         self.public_key, self.private_key = self.generate_rsa()
         self.utxos = utxos_arg
 
-    def balance():
+    def balance(self):
         ret = 0
         for utxo in self.utxos:
             ret = ret + utxo.ammount

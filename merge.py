@@ -190,3 +190,17 @@ class Block:
         """
         self.listOfTransactions.append(transaction)
         return(len(listOfTransactions))
+
+def poutsa(item,key):
+    """
+    Signs a transaction, using the users given (private ) key, in DER format
+    """
+    # dict = self.to_dict()
+    # print("Transaction dictionary inside GET_SIGNATURE is:")
+    # print(dict)
+
+    class_str = item
+    h = SHA256.new(class_str)
+    key_obj = RSA.importKey(key)
+    signature = PKCS1_v1_5.new(key_obj).sign(h)
+    return signature

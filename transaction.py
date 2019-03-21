@@ -25,15 +25,15 @@ class Transaction:
             utxo.transaction_id = self.transaction_id
         self.Signature = self.get_signature(sender_private_key)
 
-    #     # self.sender_address: To public key του wallet από το
-    # οποίο προέρχονται τα χρήματα
-    #     # self.receiver_address: To public key του wallet στο οποίο θα
-    # καταλήξουν τα χρήματα
-    #     # self.amount: το ποσό που θα μεταφερθεί
-    #     # self.transaction_id: το hash του transaction
-    #     # self.transaction_inputs: λίστα από Transaction Input
-    #     # self.transaction_outputs: λίστα από Transaction Output
-    #     # self.Signature
+    def serialize(self):
+        return {'sender_address': self.sender_address.decode(),
+                'receiver_address': self.receiver_address.decode(),
+                'amount': self.amount,
+                'transaction_inputs': [i.serialize() for i in self.transaction_inputs],
+                'transaction_outputs': [i.serialize() for i in self.transaction_outputs],
+                'transaction_id': self.transaction_id,
+                # 'Signature': self.Signature.decode('ascii')
+                }
 
     def to_dict(self):
         """

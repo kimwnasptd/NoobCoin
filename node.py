@@ -6,7 +6,7 @@ import requests
 from blockchain import Blockchain
 from utxo import TransactionInput, TransactionOutput
 from transaction import Transaction
-
+from block import Block
 CAPACITY = 10
 MINING_DIFFICULTY = 7
 
@@ -15,10 +15,10 @@ class Node:
     def __init__(self, address):
         self.NBC = 100
         self.wallet = Wallet()
-        self.address = address  #URL: localhost:id
+        self.address = address  # URL: localhost:id
         self.public_key = self.wallet.public_key
         self.id = -1  # Will be automatically set after bootstrapping
-        self.cache = []    # a cache for transactions yet to be added
+        self.tx_buffer = []    # a tx_buffer for transactions yet to be added
         self.chain = Blockchain()
 
         # here we store information for every node, as its id, its
@@ -40,15 +40,31 @@ class Node:
             'NBCs': 100,
         })
 
+    def create_genesis_chain(self):
+        # Construct Bootstrap node first utxo : n*100 coins
+        B0 = Block(b'0')
+        n = len(self.ring)
+        T0 = Transaction(sender_address=self.public_key,
+                        sender_private_key=self.wallet.private_key,
+                        recipient_address=self.public_key, amount=n*100,
+                        transaction_inputs=[],
+                        transaction_outputs=[
+                            TransactionOutput(n*100, -1, self.public_key),
+                            TransactionOutput(0, -1, self.public_key)])
+        B0.add_transaction(T0)
+        self.chain = Blockchain(blocks=[B0])
+
     '''
     The Bootstrapper Node will POST every other node and inform it about
     the final ring with all the connected nodes
     '''
     def broadcast_ring(self):
+        self.create_genesis_chain()
         for node in self.ring:
             if node['address'] != self.address:
                 addr = 'http://' + node['address'] + '/connect'
-                requests.post(addr, json=self.ring)
+                requests.post(addr, json={'ring': self.ring,
+                                          'genesis_chain': self.chain.serialize()})
 
     def get_public_key_by_id(self, id):
         """
@@ -102,7 +118,7 @@ class Node:
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
                 flag = True
-        for transaction in self.cache:
+        for transaction in self.tx_buffer:
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
@@ -181,9 +197,8 @@ class Node:
         if gathered_amount < amount:   # get a job, not enough money
             return False
         #  remove used utxos
-        self.wallet.utxos = [utxo for i, utxo in
-                                    enumerate(self.wallet.utxos) if
-                                    i not in used_utxo_indexes]
+        self.wallet.utxos = [utxo for i, utxo in enumerate(self.wallet.utxos)
+                             if i not in used_utxo_indexes]
 
         # create transaction_inputs
         transaction_inputs = [TransactionInput(utxo.id, utxo.amount) for
@@ -203,7 +218,13 @@ class Node:
 
         # remember to broadcast it
         self.broadcast_transaction(T)
-        return True
+        return(True)
+
+    def valid_block(self, block):
+        return(True)
+
+    def valid_chain():
+        return(True)
 
 
     # def.create_new_block():
