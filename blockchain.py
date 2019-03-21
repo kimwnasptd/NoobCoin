@@ -2,9 +2,14 @@ from block import Block
 
 
 class Blockchain:
-    def __init__(self, blocks=[Block(previousHash=b"0")]):
+    def __init__(self, *args, **kwargs):
 
-        self.blocks = blocks
+        if kwargs.get('json', False):
+            # Got a JSON Object
+            bs = kwargs.get('blocks')
+            self.blocks = [Block(**b) for b in bs]
+        else:
+            self.blocks = kwargs.get('blocks', [Block(previousHash=b"0")])
 
     def serialize(self):
         return {'blocks': [i.serialize() for i in self.blocks]}
@@ -21,3 +26,6 @@ class Blockchain:
             return(True)
         else:
             return(False)
+
+    def get_last_block(self):
+        return(self.blocks[-1])

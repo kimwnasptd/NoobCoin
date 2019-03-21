@@ -62,3 +62,17 @@ class Block:
         """
         self.listOfTransactions.append(transaction)
         return(len(self.listOfTransactions))
+
+    def validate_hash(self):
+        """
+        Follows the same procedure as the get_hash function and ensures that
+        the given hash is correct.
+        """
+        hash = self.hash
+        dict = self.__dict__.copy()
+        dict.pop("hash")
+        dict.pop("nonce")
+        class_str = str(list(dict.values())).encode()
+        h = SHA256.new(class_str)
+        res_hex = h.hexdigest()
+        return(res_hex == hash)

@@ -10,6 +10,7 @@ from utils import create_logger
 from node import Node
 from transaction import Transaction
 from block import Block
+from blockchain import Blockchain
 
 
 logger = create_logger('rest')
@@ -84,7 +85,9 @@ def post_connect():
     logger.info('Network ring: ' + str(node.ring))
     logger.info('Network genesis_chain: ' + str(node.chain))
     # Transaction(**genesis_chain['blocks'][0]['listOfTransactions'][0])
-    Block(**genesis_chain['blocks'][0])
+    # Block(**genesis_chain['blocks'][0])
+    Blockchain(json=True, **genesis_chain)
+
     return jsonify('OK'), 200
 
 
