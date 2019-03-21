@@ -48,28 +48,25 @@ class Node:
         # Construct Bootstrap node first utxo : n*100 coins
         B0 = Block(previousHash=b'0')
         n = len(self.ring)
+        txo_sent = TransactionOutput(amount=n*100,
+                          transaction_id=-1,
+                          address=self.public_key)
+        txo_change = TransactionOutput(amount=0,
+                          transaction_id=-1,
+                          address=self.public_key)
         T0 = Transaction(
             sender_address=self.public_key,
             sender_private_key=self.wallet.private_key,
             receiver_address=self.public_key,
             amount=n*100,
             transaction_inputs=[],
-            transaction_outputs=[
-                TransactionOutput(amount=n*100,
-                                  transaction_id=-1,
-                                  address=self.public_key),
-                TransactionOutput(amount=0,
-                                  transaction_id=-1,
-                                  address=self.public_key)
-            ]
+            transaction_outputs=[txo_sent, txo_change]
         )
         B0.add_transaction(T0)
         self.chain = Blockchain(blocks=[B0])
         #adding n*100 coins to my wallet (BS node)
 
-        self.wallet.utxos = [TransactionOutput(amount=n*100,
-                          transaction_id=-1,
-                          address=self.public_key)]
+        self.wallet.utxos = [txo_sent]
         logger.info('added n*100 to genesis, exiting create genesis')
 
     '''
@@ -135,27 +132,37 @@ class Node:
         and has that specific amount. Else, returns false
         """
         flag = False
+        logger.info("Inside CHECK SANITY id, value, sender: " + str(id) + ' ' + str(value) + ' ' + str(sender))
+        logger.info('Inside CHECK SANITY, transactions length is: ' + str(len(self.chain.get_transactions())))
         for transaction in self.chain.get_transactions():
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
+                logger.info("CHECK SANITY 1")
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
+                logger.info("CHECK SANITY 2")
                 flag = True
         for transaction in self.tx_buffer:
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
+                logger.info("CHECK SANITY 3")
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
+                logger.info("CHECK SANITY 4")
                 flag = True
+        logger.info("CHECK SANITY 5")
         return(flag)
 
     def check_transaction_balance(self, transaction):
         input_sum = 0
+        logger.info("INSIDE CHECK TRANSACTION BALANCE")
         for item in transaction.transaction_inputs:
             input_sum = input_sum + item.amount
             if not(self.check_sanity(item.previousOutputId, item.amount,
-                                     transaction.sender)):
+                                     transaction.sender_address)):
+                logger.info("Check sanity returned FALSE")
                 return False
         output_sum = (transaction.transaction_outputs[0].amount +
-                      transaction.transaction_outputs[0].amount)
+                      transaction.transaction_outputs[1].amount)
+        logger.info("INSIDE CHECK TRANSACTION BALANCE, input/output pair: " + str(input_sum) + ' ' + str(output_sum))
         return(input_sum == output_sum)
 
     def validate_transaction(self, transaction):
@@ -163,7 +170,7 @@ class Node:
         Validates a transaction, checking both its signature, and that the
         UTXO inputs/outputs are proper.
         """
-        if(transaction.validate_signature() and
+        if(transaction.verify_signature() and
            self.check_transaction_balance(transaction)):
             return(True)
         else:
@@ -221,16 +228,21 @@ class Node:
             gathered_amount += t.amount
             if (gathered_amount >= amount):
                 break
+        logger.info('gathered_amount:' + str(gathered_amount)+
+        ' wallet utxos length: ' + str(len(self.wallet.utxos)))
         if gathered_amount < amount:   # get a job, not enough money
-            logger.info('gathered_amount:' + str(gathered_amount)+
-                        ' wallet utxos length: ' + str(len(self.wallet.utxos)) +
-                        ' not enough money')
+            logger.info('Not enough money in wallet')
             return None
         #  remove used utxos
         self.wallet.utxos = [utxo for i, utxo in enumerate(self.wallet.utxos)
                              if i not in used_utxo_indexes]
 
         logger.info("Rached line 220")
+        logger.info("Wallet length after transaction: " +
+                    str(len(self.wallet.utxos)))
+        logger.info("Used indexes: " +
+                    str(used_utxo_indexes))
+
         # create transaction_inputs
         transaction_inputs = [
             TransactionInput(previousOutputId=utxo.id, amount=utxo.amount)

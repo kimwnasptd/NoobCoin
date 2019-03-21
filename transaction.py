@@ -33,6 +33,7 @@ class Transaction:
 
         if kwargs.get('Signature', None) is not None:
             # Got a JSON object
+            logger.info("TRANSACTION creation through json object")
             self.sender_address = (kwargs['sender_address']).encode()
             self.receiver_address = (kwargs['receiver_address']).encode()
             in_utxos = kwargs['transaction_inputs']
@@ -126,11 +127,13 @@ class Transaction:
         Check if the  transaction contains the specified utxo, either
         as input or output
         """
+        logger.info('Searching for item with: ' + str(id) + ' ' + str(value) + ' ' + str(sender))
         for item in self.transaction_outputs:
+            logger.info("UTXO ITEM FIELDS: " + str(item.id) + ' ' + str(item.amount) + str(item.address))
             if (item.id == id and item.amount == value and
                     item.address == sender):
                 return("OUTPUT")
         for item in self.transaction_inputs:
-            if (item.id == id):
+            if (item.previousOutputId == id):
                 return("INPUT")
         return("NOT FOUND")

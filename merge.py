@@ -73,8 +73,8 @@ class Transaction:
     def get_id(self):
         dict = self.to_dict()
 
-        print("Transaction dictionary inside GET_ID is:")
-        print(dict)
+        # print("Transaction dictionary inside GET_ID is:")
+        # print(dict)
         class_str = str( list(dict.values())).encode()
 
         h = SHA256.new(class_str)
@@ -86,8 +86,8 @@ class Transaction:
         Signs a transaction, using the users given (private ) key, in DER format
         """
         dict = self.to_dict()
-        print("Transaction dictionary inside GET_SIGNATURE is:")
-        print(dict)
+        # print("Transaction dictionary inside GET_SIGNATURE is:")
+        # print(dict)
 
         class_str = str( list(dict.values())).encode()
         h = SHA256.new(class_str)
@@ -106,8 +106,8 @@ class Transaction:
         key_obj = RSA.importKey(key)         # key here is the PUBLIC KEY of the sender
 
         dict.pop('Signature')                # the signature field didn't exist during the mesage signing
-        print("Transaction dictionary inside validate_signature is:")
-        print(dict)
+        # print("Transaction dictionary inside validate_signature is:")
+        # print(dict)
 
         class_str = str( list(dict.values())).encode()
         h = SHA256.new(class_str)
@@ -147,7 +147,7 @@ class node:
         then its hash is added, and then it is mined
         """
         #if enough transactions  mine
-        if( validdate_transaction(transaction) ):                        # if the transaction is valid
+        if( validate_transaction(transaction) ):                        # if the transaction is valid
             number_of_transactions = block.add_transaction(transaction)  # add it to the  block
             if( number_of_transactions >= CAPACITY ):                    # if enough transactions, add the block hash and then mine
                 block.hash = block.get_hash()
@@ -196,7 +196,7 @@ def poutsa(item,key):
     Signs a transaction, using the users given (private ) key, in DER format
     """
     # dict = self.to_dict()
-    # print("Transaction dictionary inside GET_SIGNATURE is:")
+    print("Transaction dictionary inside GET_SIGNATURE is:")
     # print(dict)
 
     class_str = item

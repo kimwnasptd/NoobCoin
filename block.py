@@ -18,6 +18,7 @@ class Block:
         '''
 
         if kwargs.get('timestamp', None) is not None:
+            logger.info("BLOCK creation through json object")
             self.previousHash = (kwargs['previousHash']).encode()
             # Got a JSON Object
             self.timestamp = kwargs['timestamp']
