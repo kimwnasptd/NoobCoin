@@ -5,6 +5,7 @@ import requests
 import time
 
 PIDS_FILE = 'logs/running.pids.log'
+BTS = 'http://localhost:5000'
 
 
 def run(cmd, logfile):
@@ -52,8 +53,16 @@ def start():
         time.sleep(1)
 
     # Then the boostrap node must inform everyone about the networks structure
-    resp = requests.get('http://localhost:5000/broadcast-ring').json()
+    resp = requests.get(BTS + '/broadcast-ring').json()
     print(resp)
+
+    time.sleep(1)
+    # The bootstrapper creates the first n initial transactions
+    for n in range(int(nodes))[1:]:
+        requests.post(BTS + '/create-transaction', json={
+            'id': n,
+            'value': 100,
+        })
 
 
 def stop():

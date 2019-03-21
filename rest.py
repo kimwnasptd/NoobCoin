@@ -113,9 +113,12 @@ def create_transaction():
     node = cache.get('node')
     target_id = args['id']
     value = args['value']
+
     logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
     logger.info('Target: ' + target_id + 'amount: ' + value)
-    if node.create_transaction(int(target_id), int(value)):
+    t = node.create_transaction(int(target_id), int(value))
+    if t is not None:
+        node.broadcast_transaction(t)
         logger.info('Transaction successfully broadcasted')
         return jsonify('OK'), 200
     else:

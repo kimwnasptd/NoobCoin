@@ -209,7 +209,7 @@ class Node:
             if (gathered_amount >= amount):
                 break
         if gathered_amount < amount:   # get a job, not enough money
-            return False
+            return None
         #  remove used utxos
         self.wallet.utxos = [utxo for i, utxo in enumerate(self.wallet.utxos)
                              if i not in used_utxo_indexes]
@@ -231,15 +231,13 @@ class Node:
                               address=sender_address)
         ]
         # create Transaction Object
-        T = Transaction(sender_address=sender_address,
+        t = Transaction(sender_address=sender_address,
                         sender_private_key=sender_private_key,
                         receiver_address=recipient_address, amount=amount,
                         transaction_inputs=transaction_inputs,
                         transaction_outputs=transaction_outputs)
 
-        # remember to broadcast it
-        self.broadcast_transaction(T)
-        return(True)
+        return t
 
     def validate_block(self, block, index=None):
         """
@@ -279,7 +277,10 @@ class Node:
 
 
 
-    # def broadcast_transaction():
+    def broadcast_transaction(self, t):
+        for node in self.ring:
+            addr = node['address'] + '/send-transaction'
+            requests.post(addr, json={'transaction': t.serialize()})
 
 
 
