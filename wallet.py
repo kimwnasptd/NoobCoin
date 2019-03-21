@@ -11,6 +11,9 @@ import json
 from time import time
 from urllib.parse import urlparse
 from uuid import uuid4
+from utils import create_logger
+
+logger = create_logger(__name__)
 
 
 class Wallet:

@@ -6,9 +6,12 @@ import Crypto.Random
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
+from utils import create_logger
 
 import requests
 from flask import Flask, jsonify, request, render_template
+
+logger = create_logger(__name__)
 
 
 class Transaction:
@@ -32,7 +35,7 @@ class Transaction:
                 'transaction_inputs': [i.serialize() for i in self.transaction_inputs],
                 'transaction_outputs': [i.serialize() for i in self.transaction_outputs],
                 'transaction_id': self.transaction_id,
-                # 'Signature': self.Signature.decode('ascii')
+                'Signature': [int(b) for b in self.Signature]  # Make bytes -> [int]
                 }
 
     def to_dict(self):
@@ -47,8 +50,8 @@ class Transaction:
         dict = self.to_dict()
         dict.pop('transaction_outputs')
 
-        print("Transaction dictionary inside GET_ID is:")
-        print(dict)
+        logger.info("Transaction dictionary inside GET_ID is:")
+        logger.info(dict)
         class_str = str(list(dict.values())).encode()
 
         h = SHA256.new(class_str)
@@ -61,8 +64,8 @@ class Transaction:
         in PEM format
         """
         dict = self.to_dict()
-        print("Transaction dictionary inside GET_SIGNATURE is:")
-        print(dict)
+        logger.info("Transaction dictionary inside GET_SIGNATURE is:")
+        logger.info(dict)
 
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)
@@ -81,8 +84,8 @@ class Transaction:
         key_obj = RSA.importKey(key)     # key here is the PUBLIC KEY of sender
 
         dict.pop('Signature')    # the signature field didn't exist during sign
-        print("Transaction dictionary inside validate_signature is:")
-        print(dict)
+        logger.info("Transaction dictionary inside validate_signature is:")
+        logger.info(dict)
 
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)

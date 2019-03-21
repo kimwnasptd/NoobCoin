@@ -1,6 +1,9 @@
 # import blockchain
 import datetime
 from Crypto.Hash import SHA256
+from utils import create_logger
+
+logger = create_logger(__name__)
 
 
 class Block:

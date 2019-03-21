@@ -6,10 +6,11 @@ import blockchain
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from werkzeug.contrib.cache import SimpleCache
+from utils import create_logger
 from node import Node
 
 
-logger = None
+logger = create_logger('rest')
 app = Flask(__name__)
 CORS(app)
 # blockchain = Blockchain()
@@ -79,8 +80,7 @@ def post_connect():
 
     logger.info('Node successfully connected with ID: ' + str(node.id))
     logger.info('Network ring: ' + str(node.ring))
-    logger.info('Network ring: ' + str(type(ring[0])))
-    logger.info('Network genesis_chain: ' + str(node.chain.get_transactions()))
+    logger.info('Network genesis_chain: ' + str(node.chain))
     return jsonify('OK'), 200
 
 
@@ -137,14 +137,6 @@ if __name__ == '__main__':
     nodes_count = args.nodes_count
 
     address = 'localhost:' + str(port)
-
-    # Set up logging
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter(
-        '%(asctime)s | %(name)s | %(levelname)s | %(message)s'))
-    logger = logging.getLogger(address)
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
 
     # The state
     node = Node(address)

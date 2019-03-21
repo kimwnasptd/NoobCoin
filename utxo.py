@@ -1,4 +1,7 @@
 from Crypto.Random.random import getrandbits
+from utils import create_logger
+
+logger = create_logger(__name__)
 
 
 class TransactionInput:

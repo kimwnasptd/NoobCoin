@@ -3,10 +3,14 @@ from wallet import Wallet
 from random import randint
 from Crypto.Hash import SHA256
 import requests
+from utils import create_logger
 from blockchain import Blockchain
 from utxo import TransactionInput, TransactionOutput
 from transaction import Transaction
 from block import Block
+
+logger = create_logger(__name__)
+
 CAPACITY = 10
 MINING_DIFFICULTY = 7
 
