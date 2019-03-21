@@ -65,6 +65,12 @@ class Node:
         )
         B0.add_transaction(T0)
         self.chain = Blockchain(blocks=[B0])
+        #adding n*100 coins to my wallet (BS node)
+
+        self.wallet.utxos = [TransactionOutput(amount=n*100,
+                          transaction_id=-1,
+                          address=self.public_key)]
+        logger.info('added n*100 to genesis, exiting create genesis')
 
     '''
     The Bootstrapper Node will POST every other node and inform it about
@@ -84,9 +90,11 @@ class Node:
         """
         Gets the public key of the wanted recipient of the transaction.
         """
+        logger.info('get_public_key_by_id: id = ' + str(id) + ' type = ' + str(type(id)))
         for item in self.ring:
+            logger.info(str(item['id']) + ' type = ' + str(type(item['id'])))
             if (item['id'] == id):
-                return(item['public_key'])
+                return((item['public_key']).encode())
         return(False)
 
     def mine_block(self, block, difficulty=MINING_DIFFICULTY):
@@ -185,11 +193,14 @@ class Node:
         receiverId: id of receiver node (as in the Transactions.txt)
         amount: how much to transfer
         '''
+        logger.info("ENTERED CREATE Transaction")
         # get my public key
         sender_address = self.wallet.public_key
 
         # find public key by receiverId from ring
         recipient_address = self.get_public_key_by_id(receiverId)
+        logger.info("sender address type/value: " + str(type(sender_address)) +' ' + str(sender_address) )
+        logger.info("receiver address type/value: " + str(type(recipient_address)) + ' ' + str(recipient_address) )
 
         # get my private key
         sender_private_key = self.wallet.private_key
@@ -209,11 +220,15 @@ class Node:
             if (gathered_amount >= amount):
                 break
         if gathered_amount < amount:   # get a job, not enough money
+            logger.info('gathered_amount:' + str(gathered_amount)+
+                        ' wallet utxos length: ' + str(len(self.wallet.utxos)) +
+                        ' not enough money')
             return None
         #  remove used utxos
         self.wallet.utxos = [utxo for i, utxo in enumerate(self.wallet.utxos)
                              if i not in used_utxo_indexes]
 
+        logger.info("Rached line 220")
         # create transaction_inputs
         transaction_inputs = [
             TransactionInput(previousOutputId=utxo.id, amount=utxo.amount)
@@ -258,6 +273,12 @@ class Node:
             flag = flag and self.validate_block(block_list[i])
         return(flag)
 
+    def broadcast_transaction(self, t):
+        for node in self.ring:
+            addr = 'http://' + node['address'] + '/send-transaction'
+            requests.post(addr, json={'transaction': t.serialize()})
+
+
 
 
 
@@ -274,13 +295,6 @@ class Node:
 
 
     # def.create_new_block():
-
-
-
-    def broadcast_transaction(self, t):
-        for node in self.ring:
-            addr = node['address'] + '/send-transaction'
-            requests.post(addr, json={'transaction': t.serialize()})
 
 
 

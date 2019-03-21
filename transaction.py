@@ -33,8 +33,8 @@ class Transaction:
 
         if kwargs.get('Signature', None) is not None:
             # Got a JSON object
-            self.sender_address = bytes(kwargs['sender_address'])
-            self.receiver_address = bytes(kwargs['receiver_address'])
+            self.sender_address = (kwargs['sender_address']).encode()
+            self.receiver_address = (kwargs['receiver_address']).encode()
             in_utxos = kwargs['transaction_inputs']
             out_utxos = kwargs['transaction_outputs']
             self.transaction_inputs = [TransactionInput(**t) for t in in_utxos]
@@ -55,8 +55,8 @@ class Transaction:
 
     def serialize(self):
         return {
-            'sender_address': [int(b) for b in self.sender_address],
-            'receiver_address': [int(b) for b in self.receiver_address],
+            'sender_address': self.sender_address.decode(),#[int(b) for b in self.sender_address],
+            'receiver_address': self.receiver_address.decode(),#[int(b) for b in self.receiver_address],
             'amount': self.amount,
             'transaction_inputs': [i.serialize() for i in self.transaction_inputs],
             'transaction_outputs': [i.serialize() for i in self.transaction_outputs],

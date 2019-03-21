@@ -17,15 +17,16 @@ class Block:
         hash: bytes
         '''
 
-        self.previousHash = bytes(kwargs['previousHash'])
         if kwargs.get('timestamp', None) is not None:
+            self.previousHash = (kwargs['previousHash']).encode()
             # Got a JSON Object
             self.timestamp = kwargs['timestamp']
             ts = kwargs['listOfTransactions']
             self.listOfTransactions = [Transaction(**t) for t in ts]
             self.nonce = kwargs['nonce']
-            self.hash = bytes(kwargs['hash'])
+            self.hash = (kwargs['hash']).encode()
         else:
+            self.previousHash = kwargs['previousHash']
             self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.listOfTransactions = []       # will be filled by add_transaction
             self.nonce = 0   # will be filled by mine_block when the  block is full
@@ -33,11 +34,11 @@ class Block:
 
     def serialize(self):
         return {
-            'previousHash': [int(b) for b in self.previousHash],
+            'previousHash': self.previousHash.decode(),  # [int(b) for b in self.previousHash],
             'timestamp': self.timestamp,
             'listOfTransactions': [i.serialize() for i in self.listOfTransactions],
             'nonce': self.nonce,
-            'hash': [int(b) for b in self.hash],
+            'hash': self.hash.decode()  # [int(b) for b in self.hash],
         }
 
     def get_hash(self):

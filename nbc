@@ -87,7 +87,7 @@ def transaction():
         return
 
     src = int(sys.argv[2])
-    src_addr = 'http://localhost:' + str(5000 + src) + '/create_transaction'
+    src_addr = 'http://localhost:' + str(5000 + src) + '/create-transaction'
 
     dst = int(sys.argv[3])
     dst_id = 'localhost:' + str(5000 + dst)
