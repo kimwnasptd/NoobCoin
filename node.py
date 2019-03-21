@@ -223,7 +223,7 @@ class Node:
         sent_amount = amount
         change = gathered_amount - amount
         transaction_outputs = [
-            TransactionOutput(amount=sent_amount, 
+            TransactionOutput(amount=sent_amount,
                               transaction_id=-1,
                               address=recipient_address),
             TransactionOutput(amount=change,

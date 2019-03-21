@@ -107,16 +107,16 @@ def get_transactions():
 Used by CLI to create and broadcast a new transaction
 based on the receiver's id and the amount
 '''
-@app.route('/create_transaction', methods=['POST'])
+@app.route('/create-transaction', methods=['POST'])
 def create_transaction():
     args = request.get_json()
     node = cache.get('node')
     target_id = args['id']
     value = args['value']
 
-    logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
-    logger.info('Target: ' + target_id + 'amount: ' + value)
-    t = node.create_transaction(int(target_id), int(value))
+    logger.info('Node ' + str(node.id) + ' is attempting a transaction')
+    logger.info('Target: ' + str(target_id) + 'amount: ' + str(value))
+    t = node.create_transaction(target_id, value)
     if t is not None:
         node.broadcast_transaction(t)
         logger.info('Transaction successfully broadcasted')
@@ -124,6 +124,26 @@ def create_transaction():
     else:
         logger.info('Transaction could not be completed')
         return jsonify('ERROR'), 404
+
+
+'''
+Used by nodes to notify each other of a transaction.
+'''
+@app.route('/send-transaction', methods=['POST'])
+def receive_transaction():
+    logger.info('Node notified of a transaction')
+    data = request.get_json()
+    logger.info("Data json is: " + str(data))
+    node = cache.get('node')
+    transaction = Transaction(**data['transaction'])
+    # if node.create_transaction(int(target_id), int(value)):
+    #     logger.info('Transaction successfully broadcasted')
+    #     return jsonify('OK'), 200
+    # else:
+    #     logger.info('Transaction could not be completed')
+    #     return jsonify('ERROR'), 404
+    return jsonify('OK'), 200
+
 
 @app.route('/hi')
 def lets_get_hi():
@@ -172,7 +192,9 @@ if __name__ == '__main__':
             'public_key': node.wallet.public_key.decode('utf-8'),
             'id': 0,
         })
+        node.id = 0
         cache.set('node', node)
+        logger.info('Bootstrapper ID: ' + str(node.id))
 
     logger.info('Node initialized successfully!')
     app.run(host='127.0.0.1', port=port)

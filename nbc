@@ -57,6 +57,7 @@ def start():
     print(resp)
 
     time.sleep(1)
+    print('Sending initial Transactions')
     # The bootstrapper creates the first n initial transactions
     for n in range(int(nodes))[1:]:
         requests.post(BTS + '/create-transaction', json={
