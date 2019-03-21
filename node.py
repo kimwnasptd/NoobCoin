@@ -199,6 +199,8 @@ class Node:
 
         # find public key by receiverId from ring
         recipient_address = self.get_public_key_by_id(receiverId)
+        if not recipient_address:
+            return None
         logger.info("sender address type/value: " + str(type(sender_address)) +' ' + str(sender_address) )
         logger.info("receiver address type/value: " + str(type(recipient_address)) + ' ' + str(recipient_address) )
 
