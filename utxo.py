@@ -32,8 +32,8 @@ class TransactionOutput:
 
         if kwargs.get(id, None) is not None:
             # Got a JSON object
-            self.id = kwargs['id']
-            self.address = bytes(kwargs['address'])
+            self.id = kwargs['id']  # maybe int() is needed
+            self.address = (kwargs['address']).encode()
         else:
             self.id = getrandbits(256)  # some number ?? random
             self.address = kwargs['address']   # to who this utxo is going ,

@@ -57,6 +57,7 @@ def start():
     print(resp)
 
     time.sleep(1)
+    print('Sending initial Transactions')
     # The bootstrapper creates the first n initial transactions
     for n in range(int(nodes))[1:]:
         requests.post(BTS + '/create-transaction', json={
@@ -86,7 +87,7 @@ def transaction():
         return
 
     src = int(sys.argv[2])
-    src_addr = 'http://localhost:' + str(5000 + src) + '/create_transaction'
+    src_addr = 'http://localhost:' + str(5000 + src) + '/create-transaction'
 
     dst = int(sys.argv[3])
     dst_id = 'localhost:' + str(5000 + dst)

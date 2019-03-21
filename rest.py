@@ -55,6 +55,7 @@ everyone the final ring.
 def get_broadcast_ring():
     node = cache.get('node')
     node.broadcast_ring()
+    cache.set('node', node)
     logger.info('Bootstrapping: All nodes connected!')
     logger.info([node['address'] for node in cache.get('node').ring])
 
@@ -78,15 +79,15 @@ def post_connect():
         if nd['address'] == node.address:
             node.id = nd['id']
             node.ring = ring
-            node.chain = genesis_chain
+            node.chain = Blockchain(json=True, **genesis_chain)
             cache.set('node', node)
 
     logger.info('Node successfully connected with ID: ' + str(node.id))
     logger.info('Network ring: ' + str(node.ring))
-    logger.info('Network genesis_chain: ' + str(node.chain))
+    logger.info('Network genesis_chain: ' + str(node.chain.blocks[0].listOfTransactions[0].sender_address))
     # Transaction(**genesis_chain['blocks'][0]['listOfTransactions'][0])
     # Block(**genesis_chain['blocks'][0])
-    Blockchain(json=True, **genesis_chain)
+    # Blockchain(json=True, **genesis_chain)
 
     return jsonify('OK'), 200
 
@@ -107,16 +108,18 @@ def get_transactions():
 Used by CLI to create and broadcast a new transaction
 based on the receiver's id and the amount
 '''
-@app.route('/create_transaction', methods=['POST'])
+@app.route('/create-transaction', methods=['POST'])
 def create_transaction():
     args = request.get_json()
     node = cache.get('node')
     target_id = args['id']
     value = args['value']
 
-    logger.info('Node ' + str(node.id) + 'is attempting a transaction \n')
-    logger.info('Target: ' + target_id + 'amount: ' + value)
-    t = node.create_transaction(int(target_id), int(value))
+    logger.info('Node ' + str(node.id) + ' is attempting a transaction')
+    logger.info('Target: ' + str(target_id) + 'amount: ' + str(value))
+    logger.info("Target id value/type: " + str(target_id) +' ' + str(type(target_id)))
+    logger.info("Value value/type: " + str(value) + ' ' + str(type(value)))
+    t = node.create_transaction(target_id, value)
     if t is not None:
         node.broadcast_transaction(t)
         logger.info('Transaction successfully broadcasted')
@@ -129,8 +132,8 @@ def create_transaction():
 '''
 Used by nodes to notify each other of a transaction.
 '''
-@app.route('/send_transaction', methods=['POST'])
-def receive_transaction():
+@app.route('/send-transaction', methods=['POST'])
+def send_transaction():
     logger.info('Node notified of a transaction')
     data = request.get_json()
     logger.info("Data json is: " + str(data))
@@ -143,30 +146,6 @@ def receive_transaction():
     #     logger.info('Transaction could not be completed')
     #     return jsonify('ERROR'), 404
     return jsonify('OK'), 200
-
-
-# @app.route('/connect', methods=['POST'])
-# def post_connect():
-#     data = request.get_json()
-#     ring = data['ring']
-#     genesis_chain = data['genesis_chain']
-#     node = cache.get('node')
-#
-#     for nd in ring:
-#         if nd['address'] == node.address:
-#             node.id = nd['id']
-#             node.ring = ring
-#             node.chain = genesis_chain
-#             cache.set('node', node)
-#
-#     logger.info('Node successfully connected with ID: ' + str(node.id))
-#     logger.info('Network ring: ' + str(node.ring))
-#     logger.info('Network genesis_chain: ' + str(node.chain))
-#     # Transaction(**genesis_chain['blocks'][0]['listOfTransactions'][0])
-#     # Block(**genesis_chain['blocks'][0])
-#     Blockchain(json=True, **genesis_chain)
-#
-#     return jsonify('OK'), 200
 
 
 @app.route('/hi')
@@ -216,7 +195,9 @@ if __name__ == '__main__':
             'public_key': node.wallet.public_key.decode('utf-8'),
             'id': 0,
         })
+        node.id = 0
         cache.set('node', node)
+        logger.info('Bootstrapper ID: ' + str(node.id))
 
     logger.info('Node initialized successfully!')
     app.run(host='127.0.0.1', port=port)
