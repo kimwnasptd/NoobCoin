@@ -205,7 +205,7 @@ def mineBlock():
         cache.set('MINING', False)
         logger.info("MINING ENDED ")
         # remove mined TXs from buffer
-        node.tx_buffer = node.tx_buffer[node.CAPACITY:]
+        # node.tx_buffer = node.tx_buffer[node.CAPACITY:]
         node.broadcast_block(mined_block)                # NOTE : DEBUG
     cache.set('node', node)
     return jsonify('OK'), 200
@@ -235,6 +235,9 @@ def post_block():
     if node.validate_block(blk):
         logger.info("inside /block POST block VALIDATED")
         node.chain.blocks.append(blk)
+        # remove added blocks from buffer
+        block_tx_ids = [t.transaction_id for t in blk.listOfTransactions]
+        node.tx_buffer = [t for t in node.tx_buffer if t.transaction_id not in block_tx_ids]
         # TODO: Stop the minning
         cache.set('node', node)
         return jsonify('Block added'), 200
@@ -246,6 +249,20 @@ def post_block():
     cache.set('node', node)
     return jsonify('Coflict Resolved'), 200
 
+
+@app.route('/balance')
+def get_balance():
+    node = cache.get('node')
+    balance = node.wallet.balance()
+    return jsonify({'balance': balance}), 200
+
+
+@app.route('/last_block')
+def return_last_block_transactions():
+    node = cache.get('node')
+    last_block = node.chain.get_last_block()
+    ans = [i.serialize() for i in last_block.listOfTransactions]
+    return jsonify({'last block transactions': ans}), 200
 
 @app.route('/hi')
 def lets_get_hi():
