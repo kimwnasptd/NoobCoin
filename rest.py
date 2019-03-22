@@ -11,7 +11,7 @@ from node import Node
 from transaction import Transaction
 from block import Block
 from blockchain import Blockchain
-
+import time
 
 logger = create_logger('rest')
 app = Flask(__name__)
@@ -141,6 +141,7 @@ def send_transaction():
     data = request.get_json()
     logger.info("Data json is: " + str(data))
     node = cache.get('node')
+    MINING = cache.get('MINING')
     transaction = Transaction(**data['transaction'])
     # logger.info('Signature  = ' + str(transaction.Signature))
     logger.info('Inside /send-transaction Signature verification = ' + str(transaction.verify_signature()))
@@ -157,13 +158,46 @@ def send_transaction():
         if transaction.sender_address == node.public_key:  # get change money
             node.wallet.utxos.append(transaction.transaction_outputs[1])
             logger.info('Updated my wallet with change money+ ' + str(node.wallet.utxos[-1].amount))
-
+        if (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
+            # send request to node.address/mine-block with our id number
+            address = 'http://' + node.address + '/mine-block'
+            try:
+                logger.info('Pinging /mine-block of node ' + node.address)
+                requests.get(address, timeout=1)
+                logger.info('******PING EXCEPTION NOT THROWN')
+            except Exception as e:
+                logger.info('Ping EXCEPTION')
         cache.set('node', node)
         return jsonify('OK'), 200
     else:
         logger.info('Transaction couldn\'t be validated')
         cache.set('node', node)
         return jsonify('INVTR'), 500
+
+
+'''
+Get notified to start mining
+'''
+@app.route('/mine-block')
+def mineBlock():
+    node = cache.get('node')
+    MINING = cache.get('MINING')
+    if (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
+        # construct Block to mine
+        block_to_mine = Block(**{'previousHash': node.chain.get_last_block().hash})
+        # fill the block with transactions from the buffer
+        for t in range(node.CAPACITY):
+            block_to_mine.add_transaction(node.tx_buffer[t])
+        # calculate block hash
+        block_to_mine.hash = block_to_mine.get_hash()
+        logger.info('BLOCK HASH TYPE ' + str(type(block_to_mine.hash)))
+        # start mining
+        cache.set('MINING', True)
+        mined_block = node.mine_block(block_to_mine)
+        cache.set('MINING', False)
+        node.broadcast_block(mined_block)
+    cache.set('node', node)
+    return jsonify('OK'), 200
 
 
 '''
@@ -189,11 +223,13 @@ def post_block():
     if node.validate_block(blk):
         node.chain.blocks.append(blk)
         # TODO: Stop the minning
+        cache.set('node', node)
         return jsonify('Block added'), 200
 
     # Else, we need to see if we must update our blockchain
     node.resolve_conflict()
     cache.set('node', node)
+    return jsonify('Coflict Resolved'), 200
 
 
 @app.route('/hi')
@@ -222,6 +258,7 @@ if __name__ == '__main__':
     # The state
     node = Node(address)
     cache.set('counter', 1)
+    cache.set('MINING', False)
     cache.set('node', node)
     cache.set('nodes_count', nodes_count)
 

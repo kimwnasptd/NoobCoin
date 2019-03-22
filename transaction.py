@@ -83,6 +83,7 @@ class Transaction:
 
         h = SHA256.new(class_str)
         res_hex = h.hexdigest()
+        logger.info('TRANSACTION HASH TYPE: ' + str(type(res_hex)))
         return(res_hex)
 
     def get_signature(self, key):

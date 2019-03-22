@@ -11,13 +11,16 @@ from block import Block
 
 logger = create_logger(__name__)
 
-CAPACITY = 10
-MINING_DIFFICULTY = 7
+# CAPACITY = 10
+# MINING_DIFFICULTY = 7
 
 
 class Node:
     def __init__(self, address):
         self.NBC = 100
+        self.CAPACITY = 10
+        self.MINING_DIFFICULTY = 5
+        self.mining = False
         self.wallet = Wallet()
         self.address = address  # URL: localhost:id
         self.public_key = self.wallet.public_key
@@ -94,13 +97,13 @@ class Node:
                 return((item['public_key']).encode())
         return(False)
 
-    def mine_block(self, block, difficulty=MINING_DIFFICULTY):
+    def mine_block(self, block):
         """
             Mines the given, filled block until a nonce that sets its first
         # MINING_DIFFICULTY blocks to 0.
         """
         sol_length = 300
-        while(258 - sol_length < difficulty):   # we check against 258 and not
+        while(258 - sol_length < self.MINING_DIFFICULTY):   # we check against 258 and not
             #  256 because the sol_length also has the leading '0b' characters
             block.nonce = randint(0, 100000000000000000)
 
@@ -112,7 +115,7 @@ class Node:
             # print(sol_length)
         return(block)      # return the block with the correct nonce
 
-    def valid_proof(self, block, difficulty=MINING_DIFFICULTY):
+    def valid_proof(self, block):
         """
         Hashes the block, to confirm that the given nonce results in at least
         # MINING_DIFFICULTY first bits of the hash being set to 0.
@@ -121,7 +124,7 @@ class Node:
         h = SHA256.new(block_str)
         res_hex = h.hexdigest()
         sol_length = len(bin(int(res_hex, 16)))
-        if(258 - sol_length < difficulty):
+        if(258 - sol_length < self.MINING_DIFFICULTY):
             return(False)
         else:
             return(True)
@@ -187,7 +190,7 @@ class Node:
             # if the transaction is valid
             number_of_transactions = block.add_transaction(transaction)
             # add it to the  block
-            if(number_of_transactions >= CAPACITY):
+            if(number_of_transactions >= self.CAPACITY):
                 # if enough transactions, add the block hash and then mine
                 block.hash = block.get_hash()
                 mined_block = self.mine_block(block)
@@ -294,6 +297,12 @@ class Node:
         for node in self.ring:
             addr = 'http://' + node['address'] + '/send-transaction'
             requests.post(addr, json={'transaction': t.serialize()})
+
+    def broadcast_block(self, block):
+        serial_block = block.serialize()
+        for node in self.ring:
+            addr = 'http://' + node['address'] + '/block'
+            requests.post(addr, json={'block': serial_block})
 
     def resolve_conflicts(self):
         # Ask every other node in the ring and only keep the largest chain

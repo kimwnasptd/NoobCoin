@@ -54,6 +54,7 @@ class Block:
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)
         res_hex = h.hexdigest()
+        logger.info('BLOCK HASH TYPE INSIDE GET HASH: ' + str(type(res_hex)))
         return(res_hex)
 
     def add_transaction(self, transaction):
