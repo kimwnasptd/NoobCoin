@@ -134,6 +134,22 @@ def transaction_file():
     time.sleep(1)
 
 
+def balance():
+    '''
+    Check how many NBCs this user has
+    '''
+    if len(sys.argv) != 3:
+        print('Usage: ./nbc b <n>')
+        return
+
+    src = int(sys.argv[2])
+    src_id = 'localhost:' + str(5000 + src)
+
+    val = requests.get('http://' + src_id + '/balance').json()
+    print('User: ' + src_id)
+    print('Balance: ' + str(val['balance']))
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) == 1:
@@ -151,3 +167,5 @@ if __name__ == "__main__":
         transaction()
     elif cmd == 'tf':
         transaction_file()
+    elif cmd == 'b' or cmd == 'balance':
+        balance()
