@@ -1,9 +1,5 @@
 import requests
-import logging
-import sys
-import json
-import blockchain
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from werkzeug.contrib.cache import SimpleCache
 from utils import create_logger
@@ -11,13 +7,11 @@ from node import Node
 from transaction import Transaction
 from block import Block
 from blockchain import Blockchain
-import time
 
 logger = create_logger('rest')
 app = Flask(__name__)
 CORS(app)
-# blockchain = Blockchain()
-cache = SimpleCache()
+cache = SimpleCache(default_timeout=0)
 
 # ------------------------------ Bootstrapping --------------------------------
 '''
@@ -100,7 +94,7 @@ def create_transaction():
     target_id = args['id']
     value = args['value']
 
-    logger.info('** User wants me to send {} NBCs -> {}'.format(value, target_id))
+    logger.info('** User wants me to send {} NBCs -> Node {}'.format(value, target_id))
 
     t = node.create_transaction(target_id, value)
     cache.set('node', node)

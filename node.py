@@ -9,6 +9,7 @@ from utxo import TransactionInput, TransactionOutput
 from transaction import Transaction
 from block import Block
 import time
+import random
 logger = create_logger(__name__)
 
 # CAPACITY = 10
@@ -271,13 +272,18 @@ class Node:
         return(flag)
 
     def broadcast_transaction(self, t):
-        for node in self.ring:
+        lst = [x for x in self.ring]
+        random.shuffle(lst)
+        for node in lst:
             addr = 'http://' + node['address'] + '/send-transaction'
             requests.post(addr, json={'transaction': t.serialize()})
 
     def broadcast_block(self, block):
         serial_block = block.serialize()
-        for node in self.ring:
+        lst = [x for x in self.ring]
+        random.shuffle(lst)
+
+        for node in lst:
             if node['address'] != self.address:
                 addr = 'http://' + node['address'] + '/block'
                 requests.post(addr, json={'block': serial_block})

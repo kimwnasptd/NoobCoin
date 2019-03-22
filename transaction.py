@@ -1,16 +1,8 @@
-from collections import OrderedDict
-
-import binascii
-import Crypto
-import Crypto.Random
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 from utils import create_logger
 from utxo import TransactionInput, TransactionOutput
-
-import requests
-from flask import Flask, jsonify, request, render_template
 
 logger = create_logger(__name__)
 
@@ -120,8 +112,6 @@ class Transaction:
         Check if the  transaction contains the specified utxo, either
         as input or output
         """
-
-        # logger.info('Searching for item with: ' + str(id) + ' ' + str(value) + ' ' + str(sender))
         for item in self.transaction_outputs:
             if (item.id == id and item.amount == value and
                     item.address == sender):
