@@ -150,6 +150,18 @@ def balance():
     print('Balance: ' + str(val['balance']))
 
 
+def help():
+    print('-------------------- Welcome to NoobCoin CLI! --------------------')
+    print()
+    print('Available commands:')
+    print('     start <n>           Starts n Clients (Bootstrap included)')
+    print('     stop                Stops all started Clients')
+    print('     t <idA> <idB> <val> Create a Transaction from A -> B with val')
+    print('     tf <id> <file>      Apply transactions file from Node <id>')
+    print('     b <id>              Get Node\'s balance')
+    print()
+
+
 if __name__ == "__main__":
 
     if len(sys.argv) == 1:
@@ -169,3 +181,5 @@ if __name__ == "__main__":
         transaction_file()
     elif cmd == 'b' or cmd == 'balance':
         balance()
+    elif cmd == 'h' or cmd == 'help':
+        help()

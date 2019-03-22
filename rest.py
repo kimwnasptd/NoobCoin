@@ -183,7 +183,9 @@ def mineBlock():
             return jsonify('Ignored'), 200
         else:
             # remove mined TXs from buffer
-            node.tx_buffer = node.tx_buffer[node.CAPACITY:]  # Remove minned Transactions
+            # remove added blocks from buffer
+            block_tx_ids = [t.transaction_id for t in mined_block.listOfTransactions]
+            node.tx_buffer = [t for t in node.tx_buffer if t.transaction_id not in block_tx_ids]
 
             node.broadcast_block(mined_block)
             node.chain.blocks.append(mined_block)
