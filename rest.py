@@ -240,12 +240,11 @@ def get_balance():
     return jsonify({'balance': balance}), 200
 
 
-@app.route('/last_block')
+@app.route('/last-transactions')
 def return_last_block_transactions():
     node = cache.get('node')
-    last_block = node.chain.get_last_block()
-    ans = [i.serialize() for i in last_block.listOfTransactions]
-    return jsonify({'last block transactions': ans}), 200
+    return jsonify({'transactions': node.get_last_transactions()}), 200
+
 
 @app.route('/hi')
 def lets_get_hi():

@@ -178,6 +178,21 @@ def balances():
     print('Total: {} NBCs in the BlockChain'.format(total))
 
 
+def last_transactions():
+    '''
+    Get the transactions in the last block
+    '''
+    if len(sys.argv) != 3:
+        print('Usage: ./nbc ts <n>')
+        return
+
+    src = int(sys.argv[2])
+
+    ts = requests.get('http://localhost:' + str(5000 + src) + '/last-transactions').json()
+    for t in ts['transactions']:
+        print('Node {} -> Node {}: {} NBCs'.format(t['src'], t['dst'], t['val']))
+
+
 def help():
     print('-------------------- Welcome to NoobCoin CLI! --------------------')
     print()
@@ -187,7 +202,8 @@ def help():
     print('     t <idA> <idB> <val> Create a Transaction from A -> B with val')
     print('     tf <id> <file>      Apply transactions file from Node <id>')
     print('     b <id>              Get Node\'s balance')
-    print('     bs <n>             Get the balance from all Nodes')
+    print('     bs <n>              Get the balance from all Nodes')
+    print('     ts <id>             Get the Transactions in the last block from Node <id>')
     print()
 
 
@@ -212,6 +228,8 @@ if __name__ == "__main__":
         balance()
     elif cmd == 'bs' or cmd == 'balances':
         balances()
+    elif cmd == 'ts' or cmd == 'transactions':
+        last_transactions()
     elif cmd == 'h' or cmd == 'help':
         help()
     else:

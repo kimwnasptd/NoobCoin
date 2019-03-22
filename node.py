@@ -96,6 +96,13 @@ class Node:
                 return((item['public_key']).encode())
         return(False)
 
+    def get_id_by_public_key(self, pk):
+        for node in self.ring:
+            if node['public_key'] == pk:
+                return node['id']
+
+        return None
+
     def mine_block(self, block):
         """
             Mines the given, filled block until a nonce that sets its first
@@ -310,7 +317,6 @@ class Node:
             self.chain = curr
             # TODO: update the user's wallet
 
-
     def refresh_wallet_from_chain(self):
         transactions = self.chain.get_transactions()
         input_ids = []
@@ -321,3 +327,17 @@ class Node:
             input_ids.extend([q.previousOutputId for q in t.transaction_inputs])
         self.wallet.utxos = [out for out in outputs if((out.id not in input_ids) and (out.address == self.public_key))]
         return self.wallet
+
+    def get_last_transactions(self):
+        blk = self.chain.get_last_block()
+        ts = [i for i in blk.listOfTransactions]
+
+        res = []
+        for t in ts:
+            res.append({
+                'src': self.get_id_by_public_key(t.sender_address.decode()),
+                'dst': self.get_id_by_public_key(t.receiver_address.decode()),
+                'val': t.transaction_outputs[0].amount,
+            })
+
+        return res
