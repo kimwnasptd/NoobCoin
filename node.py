@@ -312,10 +312,7 @@ class Node:
 
         # If we found a new blockchain, again we must stop minning and change
         # our active blockchain
-        if found:
-            # TODO: stop the minning
-            self.chain = curr
-            # TODO: update the user's wallet
+        return found, curr
 
     def refresh_wallet_from_chain(self):
         transactions = self.chain.get_transactions()

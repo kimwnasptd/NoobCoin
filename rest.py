@@ -228,8 +228,12 @@ def post_block():
         return jsonify('Block ignored'), 200
 
     # Else, we need to see if we must update our blockchain
-    node.resolve_conflicts()
-    cache.set('node', node)
+    resolve, blkc = node.resolve_conflicts()
+    if resolve:
+        cache.set('stop_minning', True)
+        node.chain = blkc
+        cache.set('node', node)
+
     return jsonify('Coflict Resolved'), 200
 
 
