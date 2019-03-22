@@ -123,6 +123,9 @@ def transaction_file():
 
     # Send each transaction
     for t in ts:
+        if t == '':
+            return
+            
         dst = int(t.split()[0].split('id')[-1])
         dst_id = 'localhost:' + str(5000 + dst)
         val = int(t.split()[-1])
