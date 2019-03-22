@@ -49,7 +49,7 @@ class Node:
 
     def create_genesis_chain(self):
         # Construct Bootstrap node first utxo : n*100 coins
-        B0 = Block(previousHash=b'0')
+        B0 = Block(previousHash=(b'0').decode())
         n = len(self.ring)
         txo_sent = TransactionOutput(amount=n*100,
                           transaction_id=-1,
@@ -315,7 +315,8 @@ class Node:
                     .get('http://' + node['address'] + '/blockchain').json()
 
                 # Check if new Blockchain is larger
-                if len(curr.blocks) < len(chain['blockchain'].blocks):
+                logger.info("CHAIN INSIDE resolve_conflicts" + str(chain))
+                if len(curr.blocks) < len(chain['blockchain']['blocks']):
                     found = True
                     curr = Blockchain(json=True, **chain)
 

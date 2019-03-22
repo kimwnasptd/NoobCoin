@@ -10,36 +10,45 @@ logger = create_logger(__name__)
 class Block:
     def __init__(self, *args, **kwargs):
         '''
-        previousHash: bytes
+        previousHash: STRING ACTUALLY
         timestamp: string
         listOfTransactions: [Transaction]
         nonce: int
-        hash: bytes
+        hash: STRING ACTUALLY
         '''
 
         if kwargs.get('timestamp', None) is not None:
             logger.info("BLOCK creation through json object")
-            self.previousHash = (kwargs['previousHash']).encode()
+            # self.previousHash = (kwargs['previousHash']).encode()
+            self.previousHash = (kwargs['previousHash'])
             # Got a JSON Object
             self.timestamp = kwargs['timestamp']
             ts = kwargs['listOfTransactions']
             self.listOfTransactions = [Transaction(**t) for t in ts]
             self.nonce = kwargs['nonce']
-            self.hash = (kwargs['hash']).encode()
+            # self.hash = (kwargs['hash']).encode()
+            self.hash = (kwargs['hash'])
+            logger.info('BLOCK CONSTRUCTOR UP HASH TYPE: ' + str(type(self.hash)))
         else:
             self.previousHash = kwargs['previousHash']
             self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.listOfTransactions = []       # will be filled by add_transaction
             self.nonce = 0   # will be filled by mine_block when the  block is full
-            self.hash = b"0"  # will be filled once the list of transactions is full
+            self.hash = (b"0").decode()  # will be filled once the list of transactions is full
+            logger.info('BLOCK CONSTRUCTOR DOWN HASH TYPE: ' + str(type(self.hash)))
 
     def serialize(self):
+        logger.info('BLOCK SERIALIZE PREV HASH TYPE : ' + str(type(self.previousHash)))
+        logger.info('BLOCK SERIALIZE PREV FUCKING HASH : ' + str((self.previousHash)))
+        logger.info('BLOCK SERIALIZE timestamp TYPE : ' + str(type(self.timestamp)))
+        logger.info('BLOCK SERIALIZE nonce TYPE : ' + str(type(self.nonce)))
+        logger.info('BLOCK SERIALIZE HASH TYPE : ' + str(type(self.hash)))
         return {
-            'previousHash': self.previousHash.decode(),  # [int(b) for b in self.previousHash],
+            'previousHash': self.previousHash,
             'timestamp': self.timestamp,
             'listOfTransactions': [i.serialize() for i in self.listOfTransactions],
             'nonce': self.nonce,
-            'hash': self.hash.decode()  # [int(b) for b in self.hash],
+            'hash': self.hash  # [int(b) for b in self.hash],
         }
 
     def get_hash(self):

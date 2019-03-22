@@ -9,7 +9,7 @@ class Blockchain:
             bs = kwargs.get('blocks')
             self.blocks = [Block(**b) for b in bs]
         else:
-            self.blocks = kwargs.get('blocks', [Block(previousHash=b"0")])
+            self.blocks = kwargs.get('blocks', [Block(previousHash=(b"0").decode())])
 
     def serialize(self):
         return {'blocks': [i.serialize() for i in self.blocks]}

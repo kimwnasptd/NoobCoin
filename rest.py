@@ -158,6 +158,8 @@ def send_transaction():
         if transaction.sender_address == node.public_key:  # get change money
             node.wallet.utxos.append(transaction.transaction_outputs[1])
             logger.info('Updated my wallet with change money+ ' + str(node.wallet.utxos[-1].amount))
+        cache.set('node', node)
+        logger.info("inside /send-transaction MINING flag and length: " + str(MINING) + ' ' + str(len(node.tx_buffer)))
         if (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
             # send request to node.address/mine-block with our id number
             address = 'http://' + node.address + '/mine-block'
@@ -167,7 +169,7 @@ def send_transaction():
                 logger.info('******PING EXCEPTION NOT THROWN')
             except Exception as e:
                 logger.info('Ping EXCEPTION')
-        cache.set('node', node)
+
         return jsonify('OK'), 200
     else:
         logger.info('Transaction couldn\'t be validated')
@@ -180,8 +182,10 @@ Get notified to start mining
 '''
 @app.route('/mine-block')
 def mineBlock():
+    logger.info(" inside /mine-block DUM DUM DUM")
     node = cache.get('node')
     MINING = cache.get('MINING')
+    logger.info("inside /mine-block MINING flag and length: " + str(MINING) + ' ' + str(len(node.tx_buffer)))
     if (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
         # construct Block to mine
         block_to_mine = Block(**{'previousHash': node.chain.get_last_block().hash})
@@ -192,9 +196,11 @@ def mineBlock():
         block_to_mine.hash = block_to_mine.get_hash()
         logger.info('BLOCK HASH TYPE ' + str(type(block_to_mine.hash)))
         # start mining
+        logger.info("MINING STARTED ")
         cache.set('MINING', True)
         mined_block = node.mine_block(block_to_mine)
         cache.set('MINING', False)
+        logger.info("MINING ENDED ")
         node.broadcast_block(mined_block)
     cache.set('node', node)
     return jsonify('OK'), 200
@@ -227,7 +233,7 @@ def post_block():
         return jsonify('Block added'), 200
 
     # Else, we need to see if we must update our blockchain
-    node.resolve_conflict()
+    node.resolve_conflicts()
     cache.set('node', node)
     return jsonify('Coflict Resolved'), 200
 

@@ -39,7 +39,7 @@ def start():
     pids.write('bootstrapper: ' + str(pid) + '\n')
 
     # Make sure the bootstrap has been successfully started
-    time.sleep(1)
+    time.sleep(2)
 
     # All the nodes must register themselves at the Bootstrap Node
     for node in range(int(nodes))[1:]:
@@ -51,7 +51,7 @@ def start():
         pids.write('node' + str(node) + ': ' + str(pid) + '\n')
 
         # Wait for the node to register
-        time.sleep(1)
+        time.sleep(1.5)
 
     # Then the boostrap node must inform everyone about the networks structure
     resp = requests.get(BTS + '/broadcast-ring').json()

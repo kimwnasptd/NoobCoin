@@ -55,9 +55,13 @@ class Transaction:
             self.Signature = self.get_signature(sender_private_key)
 
     def serialize(self):
+        logger.info('TRANSACTION SERIALIZE S ADDRESS TYPE: ' + str(type(self.sender_address.decode())))
+        logger.info('TRANSACTION SERIALIZE R ADDRESS TYPE: ' + str(type(self.receiver_address.decode())))
+        logger.info('TRANSACTION SERIALIZE AMOUNT TYPE: ' + str(type(self.amount)))
+        logger.info('TRANSACTION SERIALIZE ID TYPE: ' + str(type(self.transaction_id)))
         return {
-            'sender_address': self.sender_address.decode(),#[int(b) for b in self.sender_address],
-            'receiver_address': self.receiver_address.decode(),#[int(b) for b in self.receiver_address],
+            'sender_address': self.sender_address.decode(),
+            'receiver_address': self.receiver_address.decode(),
             'amount': self.amount,
             'transaction_inputs': [i.serialize() for i in self.transaction_inputs],
             'transaction_outputs': [i.serialize() for i in self.transaction_outputs],
