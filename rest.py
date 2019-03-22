@@ -225,6 +225,7 @@ def post_block():
         node.tx_buffer = [t for t in node.tx_buffer if t.transaction_id not in block_tx_ids]
 
         # TODO: Stop the minning
+        node.refresh_wallet_from_chain()
         cache.set('stop_minning', True)
         cache.set('node', node)
         return jsonify('Block added'), 200
