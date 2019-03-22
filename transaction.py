@@ -132,7 +132,9 @@ class Transaction:
         Check if the  transaction contains the specified utxo, either
         as input or output
         """
-        logger.info('Searching for item with: ' + str(id) + ' ' + str(value) + ' ' + str(sender))
+        
+        # logger.info('Searching for item with: ' + str(id) + ' ' + str(value) + ' ' + str(sender))
+        logger.info('FIND UTXO SEARCHING FOR ITEM WITH value: ' + str(value))
         for item in self.transaction_outputs:
             logger.info("UTXO ITEM FIELDS: " + str(item.id) + ' ' + str(item.amount) + str(item.address))
             if (item.id == id and item.amount == value and
@@ -140,5 +142,6 @@ class Transaction:
                 return("OUTPUT")
         for item in self.transaction_inputs:
             if (item.previousOutputId == id):
+                logger.info("FIND UTXO FOUND ITEM WITH value: " + str(value) +' ' +  str(item.amount))
                 return("INPUT")
         return("NOT FOUND")

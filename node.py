@@ -8,7 +8,7 @@ from blockchain import Blockchain
 from utxo import TransactionInput, TransactionOutput
 from transaction import Transaction
 from block import Block
-
+import time
 logger = create_logger(__name__)
 
 # CAPACITY = 10
@@ -102,6 +102,7 @@ class Node:
             Mines the given, filled block until a nonce that sets its first
         # MINING_DIFFICULTY blocks to 0.
         """
+        time.sleep(2)
         sol_length = 300
         while(258 - sol_length < self.MINING_DIFFICULTY):   # we check against 258 and not
             #  256 because the sol_length also has the leading '0b' characters
@@ -135,9 +136,11 @@ class Node:
         and has that specific amount. Else, returns false
         """
         flag = False
+        logger.info('***BLOCK CHAIN: ' + '->'.join(['('+str(t.transaction_outputs[0].amount)+', ' + str(t.transaction_outputs[1].amount) + ')' for t in self.chain.get_transactions()]))
         logger.info("Inside CHECK SANITY id, value, sender: " + str(id) + ' ' + str(value) + ' ' + str(sender))
         logger.info('Inside CHECK SANITY, transactions length is: ' + str(len(self.chain.get_transactions())))
-        for transaction in self.chain.get_transactions():
+        for i, transaction in enumerate(self.chain.get_transactions()):
+            logger.info('CHECK SANITY TX no : ' + str(i) )
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
                 logger.info("CHECK SANITY 1")
                 return(False)
@@ -223,6 +226,7 @@ class Node:
         used_utxo_indexes = []
         # indexes of those utxos in the list to be removed after
         gathered_amount = 0
+        logger.info('***WALLET ' + '->'.join([str(w.amount) for w in self.wallet.utxos]))
         for idx, t in enumerate(self.wallet.utxos):
             # NOTE: GET MY utxo_list SOMEHOW
             # type(t) == class<TransactionOutput>, just saying
@@ -281,6 +285,8 @@ class Node:
         if(not index):
             # Only compare with the head of the blockchain
             curr_hash = self.chain.blocks[-1].hash
+            logger.info("VALIDATE BLOCK Current hash " + str(curr_hash) + " prev_hash " + str(block.previousHash))
+            logger.info("VALIDATE BLOCK validate_hash  result: " + str(block.validate_hash()))
             return (block.validate_hash() and curr_hash == block.previousHash)
 
         curr_hash = self.chain.blocks[index - 1].hash
@@ -318,7 +324,7 @@ class Node:
                 logger.info("CHAIN INSIDE resolve_conflicts" + str(chain))
                 if len(curr.blocks) < len(chain['blockchain']['blocks']):
                     found = True
-                    curr = Blockchain(json=True, **chain)
+                    # curr = Blockchain(json=True, **chain) #AUTH MAS GAMAEI
 
         # If we found a new blockchain, again we must stop minning and change
         # our active blockchain
@@ -329,6 +335,3 @@ class Node:
 
 
     # def.create_new_block():
-
-
-    # def broadcast_block():

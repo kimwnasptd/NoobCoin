@@ -115,12 +115,12 @@ def create_transaction():
     target_id = args['id']
     value = args['value']
 
-    logger.info('Node ' + str(node.id) + ' is attempting a transaction')
+    # logger.info('Node ' + str(node.) + ' is attempting a transaction')
     logger.info('Target: ' + str(target_id) + 'amount: ' + str(value))
     logger.info("Target id value/type: " + str(target_id) +' ' + str(type(target_id)))
     logger.info("Value value/type: " + str(value) + ' ' + str(type(value)))
     t = node.create_transaction(target_id, value)
-    cache.set('node',node)
+    cache.set('node', node)
     if t is not None:
         logger.info('INSIDE CREATE TRANSACTION Signature verification = ' + str(t.verify_signature()))
         logger.info('INSIDE CREATE TRANSACTION Transaction validation = ' + str(node.validate_transaction(t)))
@@ -141,11 +141,14 @@ def send_transaction():
     data = request.get_json()
     logger.info("Data json is: " + str(data))
     node = cache.get('node')
+    # logger.info('***WALLET ' + '->'.join([str(w.amount) for w in node.wallet.utxos]))
     MINING = cache.get('MINING')
     transaction = Transaction(**data['transaction'])
+    logger.info('***Got Transaction with input amount: ' + str(transaction.transaction_inputs[0].amount))
     # logger.info('Signature  = ' + str(transaction.Signature))
     logger.info('Inside /send-transaction Signature verification = ' + str(transaction.verify_signature()))
     # logger.info('Transaction validation = ' + str(node.validate_transaction(transaction)))
+    logger.info('***POUTSA ' + str(node.validate_transaction(transaction)) + ' ' + str(transaction.amount))
     if node.validate_transaction(transaction):
         logger.info('Transaction validated')
         # update buffer
@@ -174,7 +177,7 @@ def send_transaction():
     else:
         logger.info('Transaction couldn\'t be validated')
         cache.set('node', node)
-        return jsonify('INVTR'), 500
+        return jsonify('INVTR'), 404
 
 
 '''
@@ -198,10 +201,10 @@ def mineBlock():
         # start mining
         logger.info("MINING STARTED ")
         cache.set('MINING', True)
-        mined_block = node.mine_block(block_to_mine)
+        mined_block = node.mine_block(block_to_mine)   #NOTE : DEBUG
         cache.set('MINING', False)
         logger.info("MINING ENDED ")
-        node.broadcast_block(mined_block)
+        node.broadcast_block(mined_block)                # NOTE : DEBUG
     cache.set('node', node)
     return jsonify('OK'), 200
 
@@ -220,17 +223,21 @@ Other Nodes POST this route to inform the Node that they found a new Block
 '''
 @app.route('/block', methods=['POST'])
 def post_block():
-    logger.info('Got a new block from ' + request.remote_addr)
+    logger.info("Entered /block POST")
+    logger.info('/block POST Got a new block from ' + request.remote_addr)
     node = cache.get('node')
     data = request.get_json()
     blk = Block(**data['block'])
 
     # Check if the block is valid, add it to the blockchain
     if node.validate_block(blk):
+        logger.info("inside /block POST block VALIDATED")
         node.chain.blocks.append(blk)
         # TODO: Stop the minning
         cache.set('node', node)
         return jsonify('Block added'), 200
+    else:
+        logger.info("inside /block POST NOT VALIDATED because: " + str (node.validate_block(blk)))
 
     # Else, we need to see if we must update our blockchain
     node.resolve_conflicts()

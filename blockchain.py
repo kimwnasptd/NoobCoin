@@ -1,14 +1,21 @@
 from block import Block
+from utils import create_logger
 
+logger = create_logger(__name__)
 
 class Blockchain:
     def __init__(self, *args, **kwargs):
 
         if kwargs.get('json', False):
             # Got a JSON Object
-            bs = kwargs.get('blocks')
+            try:
+                bs = kwargs.get('blocks')
+            except Exception as e:
+                bs = kwargs.get('blockchain')['blocks']
+            logger.info('BLOCKCHAING CONTRUCTOR JSON' + str(kwargs))
             self.blocks = [Block(**b) for b in bs]
         else:
+            logger.info('BLOCKCHAING CONTRUCTOR NOTJSON' + str(kwargs))
             self.blocks = kwargs.get('blocks', [Block(previousHash=(b"0").decode())])
 
     def serialize(self):

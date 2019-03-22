@@ -60,6 +60,8 @@ class Block:
         dict = self.__dict__.copy()
         dict.pop("hash")
         dict.pop("nonce")
+        dict['listOfTransactions'] = self.serialize()['listOfTransactions']
+        # dict.pop("listOfTransactions")
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)
         res_hex = h.hexdigest()
@@ -81,10 +83,12 @@ class Block:
         the given hash is correct.
         """
         hash = self.hash
-        dict = self.__dict__.copy()
-        dict.pop("hash")
-        dict.pop("nonce")
-        class_str = str(list(dict.values())).encode()
-        h = SHA256.new(class_str)
-        res_hex = h.hexdigest()
-        return(res_hex == hash)
+        logger.info('VALIDATE HASH : CALCULATED: ' + str(self.get_hash()) + ' EXISTING: ' + str(hash))
+        return(self.get_hash() == hash)
+        # dict = self.__dict__.copy()
+        # dict.pop("hash")
+        # dict.pop("nonce")
+        # class_str = str(list(dict.values())).encode()
+        # h = SHA256.new(class_str)
+        # res_hex = h.hexdigest()
+        # return(res_hex == hash)
