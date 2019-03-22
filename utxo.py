@@ -14,8 +14,6 @@ class TransactionInput:
         self.amount = kwargs['amount']  # maybe not needed
 
     def serialize(self):
-        logger.info('INPUT TXO SERIALIZE PRVID TYPE: ' + str(type(self.previousOutputId)))
-        logger.info('INPUT TXO SERIALIZE AMOUNT TYPE: ' + str(type(self.amount)))
         return {'previousOutputId': self.previousOutputId,
                 'amount': self.amount}
 
@@ -34,7 +32,6 @@ class TransactionOutput:
 
         if kwargs.get('id', None) is not None:
             # Got a JSON object
-            logger.info("UTXO creation through json object")
             self.id = kwargs['id']  # maybe int() is needed
             self.address = (kwargs['address']).encode()
         else:
@@ -43,10 +40,6 @@ class TransactionOutput:
             # if it's change: sender_address else: receiver_address
 
     def serialize(self):
-        logger.info('UTXO SERIALIZE AMOUNT TYPE: ' + str(type(self.amount)))
-        logger.info('UTXO SERIALIZE ID TYPE: ' + str(type( self.id)))
-        logger.info('UTXO SERIALIZE TID TYPE: ' + str(type(self.transaction_id)))
-        logger.info('UTXO SERIALIZE ADRS TYPE: ' + str(type(self.address.decode())))
         return{
             'amount': self.amount,
             'id': self.id,

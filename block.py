@@ -18,7 +18,6 @@ class Block:
         '''
 
         if kwargs.get('timestamp', None) is not None:
-            logger.info("BLOCK creation through json object")
             # self.previousHash = (kwargs['previousHash']).encode()
             self.previousHash = (kwargs['previousHash'])
             # Got a JSON Object
@@ -28,21 +27,14 @@ class Block:
             self.nonce = kwargs['nonce']
             # self.hash = (kwargs['hash']).encode()
             self.hash = (kwargs['hash'])
-            logger.info('BLOCK CONSTRUCTOR UP HASH TYPE: ' + str(type(self.hash)))
         else:
             self.previousHash = kwargs['previousHash']
             self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.listOfTransactions = []       # will be filled by add_transaction
             self.nonce = 0   # will be filled by mine_block when the  block is full
             self.hash = (b"0").decode()  # will be filled once the list of transactions is full
-            logger.info('BLOCK CONSTRUCTOR DOWN HASH TYPE: ' + str(type(self.hash)))
 
     def serialize(self):
-        logger.info('BLOCK SERIALIZE PREV HASH TYPE : ' + str(type(self.previousHash)))
-        logger.info('BLOCK SERIALIZE PREV FUCKING HASH : ' + str((self.previousHash)))
-        logger.info('BLOCK SERIALIZE timestamp TYPE : ' + str(type(self.timestamp)))
-        logger.info('BLOCK SERIALIZE nonce TYPE : ' + str(type(self.nonce)))
-        logger.info('BLOCK SERIALIZE HASH TYPE : ' + str(type(self.hash)))
         return {
             'previousHash': self.previousHash,
             'timestamp': self.timestamp,
@@ -65,7 +57,6 @@ class Block:
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)
         res_hex = h.hexdigest()
-        logger.info('BLOCK HASH TYPE INSIDE GET HASH: ' + str(type(res_hex)))
         return(res_hex)
 
     def add_transaction(self, transaction):
@@ -83,7 +74,6 @@ class Block:
         the given hash is correct.
         """
         hash = self.hash
-        logger.info('VALIDATE HASH : CALCULATED: ' + str(self.get_hash()) + ' EXISTING: ' + str(hash))
         return(self.get_hash() == hash)
         # dict = self.__dict__.copy()
         # dict.pop("hash")

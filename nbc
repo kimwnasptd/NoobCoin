@@ -127,9 +127,11 @@ def transaction_file():
         dst_id = 'localhost:' + str(5000 + dst)
         val = int(t.split()[-1])
 
-        requests.post('http://' + src_id, json={'id': dst, 'value': val})
-        print('Send: {} NBCs from [{}] -> [{}]'.
+        print('\nSend: {} NBCs from [{}] -> [{}]'.
               format(val, src_id, dst_id))
+        requests.post('http://' + src_id + '/create-transaction', json={'id': dst, 'value': val})
+
+    time.sleep(1)
 
 
 if __name__ == "__main__":

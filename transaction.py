@@ -33,7 +33,6 @@ class Transaction:
 
         if kwargs.get('Signature', None) is not None:
             # Got a JSON object
-            logger.info("TRANSACTION creation through json object")
             self.sender_address = (kwargs['sender_address']).encode()
             self.receiver_address = (kwargs['receiver_address']).encode()
             in_utxos = kwargs['transaction_inputs']
@@ -55,10 +54,6 @@ class Transaction:
             self.Signature = self.get_signature(sender_private_key)
 
     def serialize(self):
-        logger.info('TRANSACTION SERIALIZE S ADDRESS TYPE: ' + str(type(self.sender_address.decode())))
-        logger.info('TRANSACTION SERIALIZE R ADDRESS TYPE: ' + str(type(self.receiver_address.decode())))
-        logger.info('TRANSACTION SERIALIZE AMOUNT TYPE: ' + str(type(self.amount)))
-        logger.info('TRANSACTION SERIALIZE ID TYPE: ' + str(type(self.transaction_id)))
         return {
             'sender_address': self.sender_address.decode(),
             'receiver_address': self.receiver_address.decode(),
@@ -81,13 +76,10 @@ class Transaction:
         dict = self.to_dict()
         dict.pop('transaction_outputs')
 
-        logger.info("Transaction dictionary inside GET_ID is:")
-        logger.info(dict)
         class_str = str(list(dict.values())).encode()
 
         h = SHA256.new(class_str)
         res_hex = h.hexdigest()
-        logger.info('TRANSACTION HASH TYPE: ' + str(type(res_hex)))
         return(res_hex)
 
     def get_signature(self, key):
@@ -96,8 +88,6 @@ class Transaction:
         in PEM format
         """
         dict = self.to_dict()
-        logger.info("Transaction dictionary inside GET_SIGNATURE is:")
-        logger.info(dict)
 
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)
@@ -116,8 +106,6 @@ class Transaction:
         key_obj = RSA.importKey(key)     # key here is the PUBLIC KEY of sender
 
         dict.pop('Signature')    # the signature field didn't exist during sign
-        logger.info("Transaction dictionary inside validate_signature is:")
-        logger.info(dict)
 
         class_str = str(list(dict.values())).encode()
         h = SHA256.new(class_str)
@@ -132,16 +120,13 @@ class Transaction:
         Check if the  transaction contains the specified utxo, either
         as input or output
         """
-        
+
         # logger.info('Searching for item with: ' + str(id) + ' ' + str(value) + ' ' + str(sender))
-        logger.info('FIND UTXO SEARCHING FOR ITEM WITH value: ' + str(value))
         for item in self.transaction_outputs:
-            logger.info("UTXO ITEM FIELDS: " + str(item.id) + ' ' + str(item.amount) + str(item.address))
             if (item.id == id and item.amount == value and
                     item.address == sender):
                 return("OUTPUT")
         for item in self.transaction_inputs:
             if (item.previousOutputId == id):
-                logger.info("FIND UTXO FOUND ITEM WITH value: " + str(value) +' ' +  str(item.amount))
                 return("INPUT")
         return("NOT FOUND")

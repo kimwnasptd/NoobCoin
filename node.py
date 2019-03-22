@@ -18,7 +18,7 @@ logger = create_logger(__name__)
 class Node:
     def __init__(self, address):
         self.NBC = 100
-        self.CAPACITY = 10
+        self.CAPACITY = 5
         self.MINING_DIFFICULTY = 5
         self.mining = False
         self.wallet = Wallet()
@@ -90,9 +90,7 @@ class Node:
         """
         Gets the public key of the wanted recipient of the transaction.
         """
-        logger.info('get_public_key_by_id: id = ' + str(id) + ' type = ' + str(type(id)))
         for item in self.ring:
-            logger.info(str(item['id']) + ' type = ' + str(type(item['id'])))
             if (item['id'] == id):
                 return((item['public_key']).encode())
         return(False)
@@ -136,39 +134,27 @@ class Node:
         and has that specific amount. Else, returns false
         """
         flag = False
-        logger.info('***BLOCK CHAIN: ' + '->'.join(['('+str(t.transaction_outputs[0].amount)+', ' + str(t.transaction_outputs[1].amount) + ')' for t in self.chain.get_transactions()]))
-        logger.info("Inside CHECK SANITY id, value, sender: " + str(id) + ' ' + str(value) + ' ' + str(sender))
-        logger.info('Inside CHECK SANITY, transactions length is: ' + str(len(self.chain.get_transactions())))
         for i, transaction in enumerate(self.chain.get_transactions()):
-            logger.info('CHECK SANITY TX no : ' + str(i) )
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
-                logger.info("CHECK SANITY 1")
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
-                logger.info("CHECK SANITY 2")
                 flag = True
         for transaction in self.tx_buffer:
             if (transaction.find_utxo(id, value, sender) == "INPUT"):
-                logger.info("CHECK SANITY 3")
                 return(False)
             if (transaction.find_utxo(id, value, sender) == "OUTPUT"):
-                logger.info("CHECK SANITY 4")
                 flag = True
-        logger.info("CHECK SANITY 5")
         return(flag)
 
     def check_transaction_balance(self, transaction):
         input_sum = 0
-        logger.info("INSIDE CHECK TRANSACTION BALANCE")
         for item in transaction.transaction_inputs:
             input_sum = input_sum + item.amount
             if not(self.check_sanity(item.previousOutputId, item.amount,
                                      transaction.sender_address)):
-                logger.info("Check sanity returned FALSE")
                 return False
         output_sum = (transaction.transaction_outputs[0].amount +
                       transaction.transaction_outputs[1].amount)
-        logger.info("INSIDE CHECK TRANSACTION BALANCE, input/output pair: " + str(input_sum) + ' ' + str(output_sum))
         return(input_sum == output_sum)
 
     def validate_transaction(self, transaction):
@@ -206,7 +192,6 @@ class Node:
         receiverId: id of receiver node (as in the Transactions.txt)
         amount: how much to transfer
         '''
-        logger.info("ENTERED CREATE Transaction")
         # get my public key
         sender_address = self.wallet.public_key
 
@@ -214,8 +199,6 @@ class Node:
         recipient_address = self.get_public_key_by_id(receiverId)
         if not recipient_address:
             return None
-        logger.info("sender address type/value: " + str(type(sender_address)) +' ' + str(sender_address) )
-        logger.info("receiver address type/value: " + str(type(recipient_address)) + ' ' + str(recipient_address) )
 
         # get my private key
         sender_private_key = self.wallet.private_key
@@ -226,7 +209,6 @@ class Node:
         used_utxo_indexes = []
         # indexes of those utxos in the list to be removed after
         gathered_amount = 0
-        logger.info('***WALLET ' + '->'.join([str(w.amount) for w in self.wallet.utxos]))
         for idx, t in enumerate(self.wallet.utxos):
             # NOTE: GET MY utxo_list SOMEHOW
             # type(t) == class<TransactionOutput>, just saying
@@ -235,20 +217,11 @@ class Node:
             gathered_amount += t.amount
             if (gathered_amount >= amount):
                 break
-        logger.info('gathered_amount:' + str(gathered_amount)+
-        ' wallet utxos length: ' + str(len(self.wallet.utxos)))
         if gathered_amount < amount:   # get a job, not enough money
-            logger.info('Not enough money in wallet')
             return None
         #  remove used utxos
         self.wallet.utxos = [utxo for i, utxo in enumerate(self.wallet.utxos)
                              if i not in used_utxo_indexes]
-
-        logger.info("Rached line 220")
-        logger.info("Wallet length after transaction: " +
-                    str(len(self.wallet.utxos)))
-        logger.info("Used indexes: " +
-                    str(used_utxo_indexes))
 
         # create transaction_inputs
         transaction_inputs = [
@@ -285,8 +258,6 @@ class Node:
         if(not index):
             # Only compare with the head of the blockchain
             curr_hash = self.chain.blocks[-1].hash
-            logger.info("VALIDATE BLOCK Current hash " + str(curr_hash) + " prev_hash " + str(block.previousHash))
-            logger.info("VALIDATE BLOCK validate_hash  result: " + str(block.validate_hash()))
             return (block.validate_hash() and curr_hash == block.previousHash)
 
         curr_hash = self.chain.blocks[index - 1].hash
@@ -307,8 +278,9 @@ class Node:
     def broadcast_block(self, block):
         serial_block = block.serialize()
         for node in self.ring:
-            addr = 'http://' + node['address'] + '/block'
-            requests.post(addr, json={'block': serial_block})
+            if node['address'] != self.address:
+                addr = 'http://' + node['address'] + '/block'
+                requests.post(addr, json={'block': serial_block})
 
     def resolve_conflicts(self):
         # Ask every other node in the ring and only keep the largest chain
@@ -321,10 +293,9 @@ class Node:
                     .get('http://' + node['address'] + '/blockchain').json()
 
                 # Check if new Blockchain is larger
-                logger.info("CHAIN INSIDE resolve_conflicts" + str(chain))
                 if len(curr.blocks) < len(chain['blockchain']['blocks']):
                     found = True
-                    curr = Blockchain(json=True, **chain) #AUTH MAS GAMAEI
+                    curr = Blockchain(json=True, **chain)  # AUTH MAS GAMAEI
 
         # If we found a new blockchain, again we must stop minning and change
         # our active blockchain

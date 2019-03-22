@@ -84,26 +84,11 @@ def post_connect():
 
     logger.info('Node successfully connected with ID: ' + str(node.id))
     logger.info('Network ring: ' + str(node.ring))
-    logger.info('Network genesis_chain: ' + str(node.chain.blocks[0].listOfTransactions[0].sender_address))
-    # Transaction(**genesis_chain['blocks'][0]['listOfTransactions'][0])
-    # Block(**genesis_chain['blocks'][0])
-    # Blockchain(json=True, **genesis_chain)
 
     return jsonify('OK'), 200
 
 
 # ------------------------------- NoobCoin ------------------------------------
-'''
-get all transactions in the blockchain
-'''
-@app.route('/transactions/get', methods=['GET'])
-def get_transactions():
-    transactions = blockchain.get_transactions()
-
-    response = {'transactions': transactions}
-    return jsonify(response), 200
-
-
 '''
 Used by CLI to create and broadcast a new transaction
 based on the receiver's id and the amount
@@ -115,20 +100,14 @@ def create_transaction():
     target_id = args['id']
     value = args['value']
 
-    # logger.info('Node ' + str(node.) + ' is attempting a transaction')
-    logger.info('Target: ' + str(target_id) + 'amount: ' + str(value))
-    logger.info("Target id value/type: " + str(target_id) +' ' + str(type(target_id)))
-    logger.info("Value value/type: " + str(value) + ' ' + str(type(value)))
+    logger.info('** User wants me to send {} NBCs -> {}'.format(value, target_id))
+
     t = node.create_transaction(target_id, value)
     cache.set('node', node)
     if t is not None:
-        logger.info('INSIDE CREATE TRANSACTION Signature verification = ' + str(t.verify_signature()))
-        logger.info('INSIDE CREATE TRANSACTION Transaction validation = ' + str(node.validate_transaction(t)))
         node.broadcast_transaction(t)  # hit /send-transaction endpoint n times
-        logger.info('Transaction successfully broadcasted')
         return jsonify('OK'), 200
     else:
-        logger.info('Transaction could not be completed')
         return jsonify('ERROR'), 404
 
 
@@ -137,41 +116,31 @@ Used by nodes to notify each other of a transaction.
 '''
 @app.route('/send-transaction', methods=['POST'])
 def send_transaction():
-    logger.info('INSIDE /send-transaction')
+    logger.info('* Heard a Transaction, adding it o buffer')
     data = request.get_json()
-    logger.info("Data json is: " + str(data))
     node = cache.get('node')
-    # logger.info('***WALLET ' + '->'.join([str(w.amount) for w in node.wallet.utxos]))
-    MINING = cache.get('MINING')
+
     transaction = Transaction(**data['transaction'])
-    logger.info('***Got Transaction with input amount: ' + str(transaction.transaction_inputs[0].amount))
-    # logger.info('Signature  = ' + str(transaction.Signature))
-    logger.info('Inside /send-transaction Signature verification = ' + str(transaction.verify_signature()))
-    # logger.info('Transaction validation = ' + str(node.validate_transaction(transaction)))
-    logger.info('***POUTSA ' + str(node.validate_transaction(transaction)) + ' ' + str(transaction.amount))
     if node.validate_transaction(transaction):
-        logger.info('Transaction validated')
         # update buffer
         node.tx_buffer.append(transaction)
-        logger.info('Buffer updated, new length: ' + str(len(node.tx_buffer)))
         # update wallet if needed
         if transaction.receiver_address == node.public_key:  # get sent money
             node.wallet.utxos.append(transaction.transaction_outputs[0])
-            logger.info('Updated my wallet with sent amount + ' + str(node.wallet.utxos[-1].amount))
         if transaction.sender_address == node.public_key:  # get change money
             node.wallet.utxos.append(transaction.transaction_outputs[1])
-            logger.info('Updated my wallet with change money+ ' + str(node.wallet.utxos[-1].amount))
         cache.set('node', node)
-        logger.info("inside /send-transaction MINING flag and length: " + str(MINING) + ' ' + str(len(node.tx_buffer)))
+
+        logger.info('* Buffer has {} Transactions.'.format(len(node.tx_buffer)))
+        MINING = cache.get('MINING')
         if (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
-            # send request to node.address/mine-block with our id number
+            logger.info('Notify self, start Minning')
             address = 'http://' + node.address + '/mine-block'
             try:
-                logger.info('Pinging /mine-block of node ' + node.address)
                 requests.get(address, timeout=1)
-                logger.info('******PING EXCEPTION NOT THROWN')
-            except Exception as e:
-                logger.info('Ping EXCEPTION')
+                logger.warning('******PING EXCEPTION NOT THROWN')
+            except Exception:
+                logger.warning('Succsffully notified the Minning endpoint')
 
         return jsonify('OK'), 200
     else:
@@ -185,29 +154,42 @@ Get notified to start mining
 '''
 @app.route('/mine-block')
 def mineBlock():
-    logger.info(" inside /mine-block DUM DUM DUM")
     node = cache.get('node')
     MINING = cache.get('MINING')
-    logger.info("inside /mine-block MINING flag and length: " + str(MINING) + ' ' + str(len(node.tx_buffer)))
-    if (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
+
+    while (not MINING) and (len(node.tx_buffer) >= node.CAPACITY):
         # construct Block to mine
         block_to_mine = Block(**{'previousHash': node.chain.get_last_block().hash})
+
         # fill the block with transactions from the buffer
         for t in range(node.CAPACITY):
             block_to_mine.add_transaction(node.tx_buffer[t])
+
         # calculate block hash
         block_to_mine.hash = block_to_mine.get_hash()
-        logger.info('BLOCK HASH TYPE ' + str(type(block_to_mine.hash)))
+
         # start mining
         logger.info("MINING STARTED ")
         cache.set('MINING', True)
-        mined_block = node.mine_block(block_to_mine)   #NOTE : DEBUG
+        mined_block = node.mine_block(block_to_mine)
         cache.set('MINING', False)
         logger.info("MINING ENDED ")
-        # remove mined TXs from buffer
-        node.tx_buffer = node.tx_buffer[node.CAPACITY:]
-        node.broadcast_block(mined_block)                # NOTE : DEBUG
-    cache.set('node', node)
+
+        # If someone notified us about a new block, then stop minning
+        stop = cache.get('stop_minning')
+        if stop:
+            logger.info('Already got another block, Ignoring the newly Minned...')
+            cache.set('stop_minning', False)
+            return jsonify('Ignored'), 200
+        else:
+            # remove mined TXs from buffer
+            node.tx_buffer = node.tx_buffer[node.CAPACITY:]  # Remove minned Transactions
+
+            node.broadcast_block(mined_block)
+            node.chain.blocks.append(mined_block)
+            cache.set('node', node)
+            logger.info('Adding my Minned Block to my BlockChain')
+
     return jsonify('OK'), 200
 
 
@@ -222,24 +204,26 @@ def get_blockchain():
 
 '''
 Other Nodes POST this route to inform the Node that they found a new Block
+remove the mined trascition
 '''
 @app.route('/block', methods=['POST'])
 def post_block():
-    logger.info("Entered /block POST")
-    logger.info('/block POST Got a new block from ' + request.remote_addr)
+    logger.info('/block POST Got a new Block!')
     node = cache.get('node')
     data = request.get_json()
     blk = Block(**data['block'])
 
     # Check if the block is valid, add it to the blockchain
     if node.validate_block(blk):
-        logger.info("inside /block POST block VALIDATED")
+        logger.info('Adding the POSTed-Block in my BlockChain')
         node.chain.blocks.append(blk)
+
         # TODO: Stop the minning
+        cache.set('stop_minning', True)
         cache.set('node', node)
         return jsonify('Block added'), 200
     else:
-        logger.info("inside /block POST NOT VALIDATED because: " + str (node.validate_block(blk)))
+        logger.warning("NOT a valid Block! Ignoring...")
 
     # Else, we need to see if we must update our blockchain
     node.resolve_conflicts()
@@ -274,6 +258,7 @@ if __name__ == '__main__':
     node = Node(address)
     cache.set('counter', 1)
     cache.set('MINING', False)
+    cache.set('stop_minning', False)
     cache.set('node', node)
     cache.set('nodes_count', nodes_count)
 
