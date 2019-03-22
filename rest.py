@@ -204,6 +204,8 @@ def mineBlock():
         mined_block = node.mine_block(block_to_mine)   #NOTE : DEBUG
         cache.set('MINING', False)
         logger.info("MINING ENDED ")
+        # remove mined TXs from buffer
+        node.tx_buffer = node.tx_buffer[node.CAPACITY:]
         node.broadcast_block(mined_block)                # NOTE : DEBUG
     cache.set('node', node)
     return jsonify('OK'), 200
