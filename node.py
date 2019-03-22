@@ -305,4 +305,13 @@ class Node:
             # TODO: update the user's wallet
 
 
-    # def.create_new_block():
+    def refresh_wallet_from_chain(self):
+        transactions = self.chain.get_transactions()
+        input_ids = []
+        outputs = []
+        for t in transactions:
+            outputs.append(t.transaction_outputs[0])
+            outputs.append(t.transaction_outputs[1])
+            input_ids.extend([q.previousOutputId for q in t.transaction_inpus])
+        self.wallet = [out for out in outputs if((out.id not in input_ids) and (out.address == self.public_key))]
+        return self.wallet

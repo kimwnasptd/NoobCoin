@@ -25,7 +25,7 @@ class Wallet:
     def balance(self):
         ret = 0
         for utxo in self.utxos:
-            ret = ret + utxo.ammount
+            ret = ret + utxo.amount
         return ret
 
     def generate_rsa(self, bits=2048):

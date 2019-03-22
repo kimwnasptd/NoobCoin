@@ -218,18 +218,37 @@ def post_block():
         logger.info('Adding the POSTed-Block in my BlockChain')
         node.chain.blocks.append(blk)
 
+        # remove added blocks from buffer
+        block_tx_ids = [t.transaction_id for t in blk.listOfTransactions]
+        node.tx_buffer = [t for t in node.tx_buffer if t.transaction_id not in block_tx_ids]
+
         # TODO: Stop the minning
         cache.set('stop_minning', True)
         cache.set('node', node)
         return jsonify('Block added'), 200
     else:
         logger.warning("NOT a valid Block! Ignoring...")
+        return jsonify('Block ignored'), 200
 
     # Else, we need to see if we must update our blockchain
     node.resolve_conflicts()
     cache.set('node', node)
     return jsonify('Coflict Resolved'), 200
 
+
+@app.route('/balance')
+def get_balance():
+    node = cache.get('node')
+    balance = node.wallet.balance()
+    return jsonify({'balance': balance}), 200
+
+
+@app.route('/last_block')
+def return_last_block_transactions():
+    node = cache.get('node')
+    last_block = node.chain.get_last_block()
+    ans = [i.serialize() for i in last_block.listOfTransactions]
+    return jsonify({'last block transactions': ans}), 200
 
 @app.route('/hi')
 def lets_get_hi():
