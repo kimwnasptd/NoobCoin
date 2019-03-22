@@ -324,7 +324,7 @@ class Node:
                 logger.info("CHAIN INSIDE resolve_conflicts" + str(chain))
                 if len(curr.blocks) < len(chain['blockchain']['blocks']):
                     found = True
-                    # curr = Blockchain(json=True, **chain) #AUTH MAS GAMAEI
+                    curr = Blockchain(json=True, **chain) #AUTH MAS GAMAEI
 
         # If we found a new blockchain, again we must stop minning and change
         # our active blockchain

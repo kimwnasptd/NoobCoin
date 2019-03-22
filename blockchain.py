@@ -8,10 +8,11 @@ class Blockchain:
 
         if kwargs.get('json', False):
             # Got a JSON Object
-            try:
-                bs = kwargs.get('blocks')
-            except Exception as e:
-                bs = kwargs.get('blockchain')['blocks']
+            bs = kwargs.get('blocks')
+            if not bs:
+                bs = kwargs['blockchain']['blocks']
+                logger.info('BS TYPE' + str(type(kwargs['blockchain'])))
+
             logger.info('BLOCKCHAING CONTRUCTOR JSON' + str(kwargs))
             self.blocks = [Block(**b) for b in bs]
         else:
